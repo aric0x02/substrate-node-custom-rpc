@@ -13,10 +13,10 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-
+use codec::{Codec, Decode, Encode, HasCompact};
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::pallet_prelude::*;
+	use frame_support::{	dispatch::{Dispatchable, GetDispatchInfo, Pays, PostDispatchInfo},pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::pallet]
@@ -28,12 +28,17 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		/// The overarching call type.
+		type RuntimeCall: Dispatchable<RuntimeOrigin = Self::RuntimeOrigin, PostInfo = PostDispatchInfo>
+			+ GetDispatchInfo
+			+ codec::Decode
+			+ IsType<<Self as frame_system::Config>::RuntimeCall>;
 	}
 
 	// The pallet's runtime storage items.
 	// https://docs.substrate.io/main-docs/build/runtime-storage/
 	#[pallet::storage]
-	#[pallet::getter(fn something)]
+	#[pallet::getter(fn get_value)]
 	// Learn more about declaring storage items:
 	// https://docs.substrate.io/main-docs/build/runtime-storage/#declaring-storage-items
 	pub type Something<T> = StorageValue<_, u32>;
@@ -102,3 +107,19 @@ pub mod pallet {
 		}
 	}
 }
+
+
+// sp_api::decl_runtime_apis! {
+// 	/// The API used to dry-run contract interactions.
+// 	#[api_version(2)]
+// 	pub trait TestApi
+// 	{
+// 		/// Perform a call from a specified account to a given contract.
+// 		///
+// 		/// See [`crate::Pallet::bare_call`].
+// 		fn call(
+// 			origin: i32,
+// 		) -> bool;
+
+// 	}
+// }

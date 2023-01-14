@@ -27,6 +27,7 @@ use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
+
 	construct_runtime, parameter_types,
 	traits::{
 		ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo,
@@ -278,6 +279,7 @@ impl pallet_sudo::Config for Runtime {
 /// Configure the pallet-template in pallets/template.
 impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+    type RuntimeCall = RuntimeCall;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -495,6 +497,20 @@ impl_runtime_apis! {
 			TransactionPayment::query_call_fee_details(call, len)
 		}
 	}
+impl pallet_template_runtime_api::TemplateApi<Block> for Runtime {
+    fn get_value() -> u32 {
+        TemplateModule::get_value().unwrap_or(0)
+    }
+}
+    // impl pallet_template::TestApi<Block>
+	// 	for Runtime
+	// {
+	// 	fn call(
+	// 		origin: i32,
+	// 	) -> bool{
+    //     false
+    //     }
+	// }
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {

@@ -1,0 +1,14 @@
+{
+ "template": {
+      "getValue": {
+        "description": "Get an order from the orderbook, throwing if none is found.",
+        "params": [
+          {
+    
+          }
+        ],
+        "type": "u32"
+      }
+     
+    }
+}
