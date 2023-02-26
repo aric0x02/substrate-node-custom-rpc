@@ -8,7 +8,7 @@ mod benchmarking;
 mod cli;
 mod command;
 mod rpc;
-
+pub mod vm_config;
 fn main() -> sc_cli::Result<()> {
 	command::run()
 }

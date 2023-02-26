@@ -29,7 +29,7 @@ use sp_version::RuntimeVersion;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo,
+		ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem,Everything, Randomness, StorageInfo,
 	},
 	weights::{
 		constants::{
@@ -38,7 +38,9 @@ pub use frame_support::{
 		IdentityFee, Weight,
 	},
 	StorageValue,
+    PalletId,
 };
+use frame_system::EnsureRoot;
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -46,9 +48,15 @@ use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 
 /// Import the template pallet.
-pub use pallet_template;
+pub use sp_mvm::gas::{GasWeightMapping};
+pub use sp_mvm_rpc_runtime::types::MVMApiEstimation;
+use constants::{SS58_PREFIX, currency::*, time::*};
+use primitives::{*, currency::CurrencyId, Index as OtherIndex};
+use module_currencies::BasicCurrencyAdapter;
+
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -275,10 +283,112 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
-/// Configure the pallet-template in pallets/template.
-impl pallet_template::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
+parameter_type_with_key! {
+    pub ExistentialDeposits: |currency_id: CurrencyId| -> u128 {
+        match currency_id {
+            &CurrencyId::NATIVE => NATIVE_EXISTENTIAL_DEPOSIT as u128,
+            CurrencyId::KSM  => KSM_EXISTENTIAL_DEPOSIT as u128
+        }
+    };
 }
+impl orml_tokens::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Balance = Balance;
+    type Amount = Amount;
+    type CurrencyId = CurrencyId;
+    type WeightInfo = ();
+    type ExistentialDeposits = ExistentialDeposits;
+    // type OnDust = ();
+    type MaxLocks = ConstU32<50>;
+    type DustRemovalWhitelist = Everything;
+	type CurrencyHooks = ();
+	type ReserveIdentifier = [u8; 8];
+	type MaxReserves = ();
+	// type DustRemovalWhitelist = Nothing;
+}
+parameter_types! {
+    pub const GetNativeCurrencyId: CurrencyId = CurrencyId::NATIVE;
+}
+
+impl module_currencies::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type CurrencyId = CurrencyId;
+    type MultiCurrency = Tokens;
+    type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+    type GetNativeCurrencyId = GetNativeCurrencyId;
+    type WeightInfo = ();
+    type SweepOrigin = EnsureRoot<AccountId>;
+    type OnDust = ();
+}
+
+impl groupsign::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Call = RuntimeCall;
+    type Public = sp_runtime::MultiSigner;
+    type Signature = sp_runtime::MultiSignature;
+    type MyOrigin = RuntimeOrigin;
+    type WeightInfo = groupsign::weights::PontemWeights<Self>;
+}
+
+/// Move VM similar to Ethereum utilizing gas approach.
+/// The gas in case of Pontem and Move VM has been done in a similar way to Moonbeam EVM approach.
+/// To get gas to weight conversion we are doing ratio: `WEIGHT_PER_GAS = WEIGHT_PER_SECOND / GAS_PER_SECOND`.
+/// To estimate `GAS_PER_SECOND` we used benchmarks we have done in Move VM.
+/// Benchmarks: https://github.com/pontem-network/sp-move-vm/blob/1.5/mvm/tests/gas_bench.rs (ignored `read_write_loop`).
+/// Benchmarks runned on the instance: 8GB RAM, 4 core CPU, SSD.
+/// The value `GAS_PER_SECOND` is not final, and can be changed later after tests on production.
+/// So currently max gas is `GAS_PER_SECOND * MAXIMUM_BLOCK_WEIGHT * NORMAL_DISPATCH_RATIO`.
+/// IMPORTANT: take into account you also paying gas for transaction bytes, include Move VM module/tx bytes, so really final max gas is different
+/// for each transaction because it also depends on the size of assets.
+pub const GAS_PER_SECOND: u64 = 6_500_000;
+
+/// Weight / gas ratio.
+/// Could be used to convert weight to gas and gas to weight.
+pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND / GAS_PER_SECOND;
+
+pub struct MoveVMGasWeightMapping;
+
+/// Trait `GasWeightMapping` implementation for `MoveVMGasWeightMapping`.
+/// Converting gas to weight and weight to gas.
+impl GasWeightMapping for MoveVMGasWeightMapping {
+    fn gas_to_weight(gas: u64) -> Weight {
+       Weight::from_ref_time(gas.saturating_mul(WEIGHT_PER_GAS))
+    }
+
+    fn weight_to_gas(weight: Weight) -> u64 {
+        weight.ref_time().wrapping_div(WEIGHT_PER_GAS)
+    }
+}
+
+parameter_types! {
+    /// VM pallet address (used to reserve funds during VM native operations).
+    pub const MVMPalletId: PalletId = PalletId(*b"_nox/mvm");
+}
+
+/// Configure the Move-pallet in pallets/sp-mvm.
+impl sp_mvm::Config for Runtime {
+    /// Events.
+    type RuntimeEvent = RuntimeEvent;
+
+    /// Gas weight mapping.
+    type GasWeightMapping = MoveVMGasWeightMapping;
+
+    /// Only sudo can deploy modules under 0x or update standard library.
+    type UpdateOrigin = EnsureRoot<AccountId>;
+
+    /// Pallet Id.
+    type PalletId = MVMPalletId;
+
+    /// Currency id.
+    type CurrencyId = CurrencyId;
+
+    /// Currencies (Multicurrency).
+    type Currencies = Currencies;
+
+    /// Weight information.
+    type WeightInfo = ();
+}
+
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -297,7 +407,10 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
-		TemplateModule: pallet_template,
+        Tokens: orml_tokens,
+        Mvm: sp_mvm,
+        Groupsign: groupsign,
+        Currencies: module_currencies,
 	}
 );
 
@@ -479,6 +592,57 @@ impl_runtime_apis! {
 		}
 	}
 
+    impl sp_mvm_rpc_runtime::MVMApiRuntime<Block, AccountId> for Runtime {
+        // Convert Weight to Gas.
+        fn gas_to_weight(gas_limit: u64) -> u64 {
+             <Runtime as sp_mvm::Config>::GasWeightMapping::gas_to_weight(gas_limit).ref_time()
+        }
+
+        // Convert Gas to Weight.
+        fn weight_to_gas(weight: u64) -> u64 {
+            <Runtime as sp_mvm::Config>::GasWeightMapping::weight_to_gas(Weight::from_ref_time(weight))
+        }
+
+        // Estimate gas for publish module.
+        fn estimate_gas_publish(account: AccountId, module_bc: Vec<u8>, gas_limit: u64) -> Result<MVMApiEstimation, sp_runtime::DispatchError> {
+            // TODO: pass real error.
+            let vm_result = Mvm::raw_publish_module(&account, module_bc, gas_limit, true)?;
+
+            Ok(MVMApiEstimation {
+                gas_used: vm_result.gas_used,
+                status_code: vm_result.status_code as u64,
+            })
+        }
+
+        // Estimate gas for execute script.
+        fn estimate_gas_execute(account: AccountId, tx_bc: Vec<u8>, gas_limit: u64) -> Result<MVMApiEstimation, sp_runtime::DispatchError> {
+            let vm_result = Mvm::raw_execute_script(&[account], tx_bc, gas_limit, false, true)?;
+
+            Ok(MVMApiEstimation {
+                gas_used: vm_result.gas_used,
+                status_code: vm_result.status_code as u64,
+            })
+        }
+
+        // Get module binary by it's address
+        fn get_module(module_id: Vec<u8>) -> Result<Option<Vec<u8>>, Vec<u8>> {
+            Mvm::get_module(&module_id.as_slice())
+        }
+
+        // Get module ABI by it's address
+        fn get_module_abi(module_id: Vec<u8>) -> Result<Option<Vec<u8>>, Vec<u8>> {
+            Mvm::get_module_abi(&module_id.as_slice())
+        }
+
+        // Get resource
+        fn get_resource(
+            account_id: AccountId,
+            tag: Vec<u8>,
+        ) -> Result<Option<Vec<u8>>, Vec<u8>> {
+            Mvm::get_resource(&account_id, &tag.as_slice())
+        }
+
+    }
 	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentCallApi<Block, Balance, RuntimeCall>
 		for Runtime
 	{

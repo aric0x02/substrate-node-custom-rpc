@@ -1,7 +1,9 @@
 use node_template_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-	SystemConfig, WASM_BINARY,
+	SystemConfig, WASM_BINARY,MvmConfig,TokensConfig,
 };
+use primitives::{currency::CurrencyId  as OtherCurrencyId, AccountId  as OtherAccountId, Signature as OtherSignature, Balance, BlockNumber};
+use constants::SS58_PREFIX;
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
@@ -9,6 +11,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
 // The URL for the telemetry server.
+use crate::vm_config::build as build_vm_config;
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
@@ -132,7 +135,14 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
+    let (init_module, init_func, init_args) = build_vm_config();
+
+    let move_stdlib =
+        include_bytes!("../move/move-stdlib/build/MoveStdlib/bundles/MoveStdlib.pac").to_vec();
+    let pont_framework =
+        include_bytes!("../move/pont-stdlib/build/PontStdlib/bundles/PontStdlib.pac").to_vec();
 	GenesisConfig {
+        tokens: TokensConfig { balances: vec![] },
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
@@ -151,6 +161,14 @@ fn testnet_genesis(
 			// Assign network admin rights.
 			key: Some(root_key),
 		},
+        mvm: MvmConfig {
+            move_stdlib,
+            pont_framework,
+            init_module,
+            init_func,
+            init_args,
+            ..Default::default()
+        },
 		transaction_payment: Default::default(),
 	}
 }
