@@ -95,6 +95,14 @@ pub trait MVMApiRpc<BlockHash, AccountId> {
     
     #[method(name = "mvm_getModuleABIs2")]
     fn get_module_abis2(&self, module_id: Bytes, at: Option<BlockHash>) -> Result<Option<MoveModuleBytecode>>;
+
+    #[method(name = "mvm_getResources")]
+    fn get_resources(
+        &self,
+        account_id: AccountId,
+        tag: Bytes,
+        at: Option<BlockHash>,
+    ) -> Result<Option<Bytes>>;
 }
 
 pub struct MVMApi<C, P> {
@@ -316,6 +324,29 @@ println!("make_function_call=result==={:?}===",f);
         // let f:Option<Vec<u8>>=Some(ff.bytes().collect());
         Ok(f.map(Into::into))
     }
+
+    fn get_resources(
+        &self,
+        account_id: AccountId,
+        tag: Bytes,
+        at: Option<<Block as BlockT>::Hash>,
+    ) -> Result<Option<Bytes>> {
+        let api = self.client.runtime_api();
+        let at = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash));
+        let (tag_bcs,tag)=convert::parse_struct_tag_string(tag.into_vec()).unwrap();
+        let f: Option<Vec<u8>> = api
+            .get_resource(&at, account_id, tag_bcs)
+            .map_err(runtime_error_into_rpc_err4)?
+            .map_err(runtime_error_into_rpc_err5)?;
+        let f = convert::struct_to_json(&tag,&f.as_ref().unwrap()).map_err(runtime_error_into_rpc_err4).ok();
+         let ff=serde_json::to_vec(&f.as_ref().unwrap()).ok();
+        println!("get_resources=result==={:?}=={:?}=",f,ff);
+        let f=ff;
+        Ok(f.map(Into::into))
+    }
+
 }
 const RUNTIME_ERROR: i32 = 500;
 

@@ -1,0 +1,24 @@
+{
+  "mvm": {
+    "gasToWeight": {
+      "description": "gasToWeight",
+      "params": [
+        {
+          "name": "gas",
+          "type": "u64"
+        }
+      ],
+      "type": "u64"
+    },
+    "weightToGas": {
+      "description": "weightToGas",
+      "params": [
+        {
+          "name": "weight",
+          "type": "u64"
+        }
+      ],
+      "type": "u64"
+    }
+  }
+}

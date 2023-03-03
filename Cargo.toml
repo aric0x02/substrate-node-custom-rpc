@@ -1,6 +1,9 @@
 [workspace]
 members = [
     "node",
+    "pallets/currencies",
+    "pallets/groupsign",
+    "pallets/sp-mvm",
     "runtime",
 ]
 [profile.release]

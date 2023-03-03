@@ -44,6 +44,7 @@ sp-core = { default-features = false, git = 'https://github.com/paritytech/subst
 
 [dependencies.move-core-types]
 path="../../../../sp-move-vm/language/move-core/types"
+default-features = false
 
 [dependencies.bcs-alt]
 package = "bcs"
@@ -64,6 +65,9 @@ features = [ "move_stdlib" ]
 path="../../../../sp-move-vm/language/move-binary-format"
 default-features = false
 
+[dependencies.move-resource-viewer]
+path="../../../../sp-move-vm/language/tools/move-resource-viewer"
+default-features = false
 # [features]
 # default = ["std"]
 # std = [

@@ -1,4 +1,4 @@
-use node_template_runtime::{
+use move_contracts_node_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
 	SystemConfig, WASM_BINARY,MvmConfig,TokensConfig,
 };

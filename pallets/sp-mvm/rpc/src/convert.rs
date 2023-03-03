@@ -29,12 +29,15 @@ use anyhow::{bail, ensure, format_err, Context as AnyhowContext, Result};
 // use aptos_vm::move_vm_ext::MoveResolverExt;
 use move_binary_format::file_format::FunctionHandleIndex;
 use move_core_types::{
+account_address::AccountAddress,
+resolver::{ModuleResolver, ResourceResolver},
     identifier::Identifier,
     language_storage::{ModuleId, StructTag, TypeTag},
     value::{MoveStructLayout, MoveTypeLayout,MoveFieldLayout},
 };
-use crate::move_types::{HexEncodedBytes,MoveValue};
-// use move_resource_viewer::MoveValueAnnotator;
+use crate::move_types::{HexEncodedBytes,MoveValue,MoveStructTag,MoveResource};
+use core::str::FromStr;
+use move_resource_viewer::MoveValueAnnotator;
 use serde_json::Value;
 use std::{
     convert::{TryFrom, TryInto},
@@ -42,6 +45,52 @@ use std::{
     rc::Rc,
     sync::Arc,
 };
+
+pub fn parse_struct_tag_string(
+    tag: Vec<u8>,
+) -> Result<(Vec<u8>,StructTag), Vec<u8>> {
+    let tag = std::str::from_utf8(&tag).unwrap();
+    let tag:MoveStructTag = MoveStructTag::from_str(tag).unwrap();
+    let tag=StructTag::try_from(tag).unwrap();
+    Ok((bcs_alt::to_bytes(&tag).unwrap(),tag))
+}
+
+pub struct StateView {
+    bytes: Vec<u8>,
+}
+impl StateView {
+    pub fn new(bytes: Vec<u8>) -> Self {
+        Self { bytes }
+    }
+}
+impl ModuleResolver for StateView {
+    type Error = anyhow::Error;
+
+    fn get_module(&self, module_id: &ModuleId) -> anyhow::Result<Option<Vec<u8>>> {
+        Ok(Some(self.bytes.clone()))
+    }
+}
+impl ResourceResolver for StateView {
+    type Error = anyhow::Error;
+
+    fn get_resource(&self, address: &AccountAddress, tag: &StructTag) -> Result<Option<Vec<u8>>> {
+        Ok(Some(self.bytes.clone()))
+    }
+}
+pub fn struct_to_json(st: &StructTag,res:&Vec<u8>)->Result<MoveResource>
+{
+                            let view = StateView::new(res.clone());
+                            // Internally produce FatStructType (with layout) for StructTag by
+                            // resolving & de-.. entire deps-chain.
+                            let annotator = move_resource_viewer::MoveValueAnnotator::new(&view);
+
+                            annotator
+                                .view_resource(&st, &res)
+                                .and_then(|result| {
+                                          result.try_into()
+                                })
+                        }
+                    
 // use storage_interface::DbReader;
 
 /// The Move converter for converting Move types to JSON
@@ -789,4 +838,4 @@ pub fn new_vm_utf8_string(string: &str) -> move_core_types::value::MoveValue {
 //     }
 // }
 
-// TODO: add caching?
+
