@@ -48,26 +48,30 @@ use std::{
 
 pub fn parse_struct_tag_string(
     tag: Vec<u8>,
-) -> Result<(Vec<u8>,StructTag), Vec<u8>> {
-    let tag = std::str::from_utf8(&tag).unwrap();
-    let tag:MoveStructTag = MoveStructTag::from_str(tag).unwrap();
-    let tag=StructTag::try_from(tag).unwrap();
-    Ok((bcs_alt::to_bytes(&tag).unwrap(),tag))
+) -> Result<(Vec<u8>,StructTag,Vec<u8>), Vec<u8>> {
+    // let tag = std::str::from_utf8(&tag).unwrap();
+    // let tag:MoveStructTag = MoveStructTag::from_str(tag).unwrap();
+    // let tag=StructTag::try_from(tag).unwrap();
+    // Ok((bcs_alt::to_bytes(&tag).unwrap(),tag))
+let struct_tag:StructTag=bcs_alt::from_bytes(&tag).unwrap();
+ let module_id = ModuleId::new(struct_tag.address.clone(), struct_tag.module.to_owned());
+    Ok((tag,struct_tag,bcs_alt::to_bytes(&module_id).unwrap()))
 }
 
 pub struct StateView {
     bytes: Vec<u8>,
+    module_bytes: Vec<u8>,
 }
 impl StateView {
-    pub fn new(bytes: Vec<u8>) -> Self {
-        Self { bytes }
+    pub fn new(bytes: Vec<u8>,module_bytes: Vec<u8>) -> Self {
+        Self { bytes,module_bytes }
     }
 }
 impl ModuleResolver for StateView {
     type Error = anyhow::Error;
 
     fn get_module(&self, module_id: &ModuleId) -> anyhow::Result<Option<Vec<u8>>> {
-        Ok(Some(self.bytes.clone()))
+        Ok(Some(self.module_bytes.clone()))
     }
 }
 impl ResourceResolver for StateView {
@@ -77,9 +81,9 @@ impl ResourceResolver for StateView {
         Ok(Some(self.bytes.clone()))
     }
 }
-pub fn struct_to_json(st: &StructTag,res:&Vec<u8>)->Result<MoveResource>
+pub fn struct_to_json(st: &StructTag,res:Vec<u8>,module:Vec<u8>)->Result<MoveResource>
 {
-                            let view = StateView::new(res.clone());
+                            let view = StateView::new(res.clone(),module);
                             // Internally produce FatStructType (with layout) for StructTag by
                             // resolving & de-.. entire deps-chain.
                             let annotator = move_resource_viewer::MoveValueAnnotator::new(&view);
@@ -87,6 +91,7 @@ pub fn struct_to_json(st: &StructTag,res:&Vec<u8>)->Result<MoveResource>
                             annotator
                                 .view_resource(&st, &res)
                                 .and_then(|result| {
+                                    println!("{:?}",result);
                                           result.try_into()
                                 })
                         }

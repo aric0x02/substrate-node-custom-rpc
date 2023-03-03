@@ -335,16 +335,21 @@ println!("make_function_call=result==={:?}===",f);
         let at = BlockId::hash(at.unwrap_or_else(||
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash));
-        let (tag_bcs,tag)=convert::parse_struct_tag_string(tag.into_vec()).unwrap();
+        let (tag_bcs,tag,module_id)=convert::parse_struct_tag_string(tag.into_vec()).unwrap();
         let f: Option<Vec<u8>> = api
             .get_resource(&at, account_id, tag_bcs)
             .map_err(runtime_error_into_rpc_err4)?
             .map_err(runtime_error_into_rpc_err5)?;
-        let f = convert::struct_to_json(&tag,&f.as_ref().unwrap()).map_err(runtime_error_into_rpc_err4).ok();
-         let ff=serde_json::to_vec(&f.as_ref().unwrap()).ok();
-        println!("get_resources=result==={:?}=={:?}=",f,ff);
+     let module: Option<Vec<u8>> = api
+            .get_module(&at, module_id)
+            .map_err(runtime_error_into_rpc_err4)?
+            .map_err(runtime_error_into_rpc_err5)?;
+        let f = convert::struct_to_json(&tag,f.unwrap(),module.unwrap()).map_err(runtime_error_into_rpc_err4).map_err(runtime_error_into_rpc_err6)?;
+            let ff=serde_json::to_vec(&f).ok();
+            println!("get_resources=result==={:?}=={:?}=",f,ff);
         let f=ff;
-        Ok(f.map(Into::into))
+            Ok(f.map(Into::into))
+       
     }
 
 }
@@ -391,6 +396,15 @@ fn runtime_error_into_rpc_err5(err: impl std::fmt::Debug) -> JsonRpseeError {
     CallError::Custom(ErrorObject::owned(
         RUNTIME_ERROR,
         "Error from method",
+        Some(format!("{:?}", err)),
+    ))
+    .into()
+}
+
+fn runtime_error_into_rpc_err6(err: impl std::fmt::Debug) -> JsonRpseeError {
+    CallError::Custom(ErrorObject::owned(
+        RUNTIME_ERROR,
+        "Error from struct tag json",
         Some(format!("{:?}", err)),
     ))
     .into()
