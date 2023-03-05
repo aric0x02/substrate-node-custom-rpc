@@ -30,6 +30,74 @@ pub mod wrappers;
 pub mod move_types;
 pub mod convert;
 pub use crate::move_types::MoveModuleBytecode;
+use anyhow::{bail, ensure, format_err, Context as AnyhowContext, Result as AnyHowResult};
+use move_core_types::{
+account_address::AccountAddress,
+resolver::{ModuleResolver, ResourceResolver},
+    identifier::Identifier,
+    language_storage::{ModuleId, StructTag, TypeTag},
+    value::{MoveStructLayout, MoveTypeLayout,MoveFieldLayout},
+};
+
+pub struct ApiStateView<C,BlockHash,AccountId,Block> {
+    client: Arc<C>,
+    account_id: AccountId,
+    at: Option<BlockHash>,
+    _marker: std::marker::PhantomData<Block>,
+}
+impl<C,Block,AccountId> ApiStateView<C,<Block as BlockT>::Hash,AccountId,Block>
+where
+    Block: BlockT,  {
+    pub fn new(client: Arc<C>,    account_id: AccountId,
+        at: Option<<Block as BlockT>::Hash>) -> Self {
+        Self { client,account_id,at, _marker: Default::default(),}
+    }
+}
+impl<C, Block,AccountId>  ModuleResolver for ApiStateView<C, <Block as BlockT>::Hash,AccountId,Block> 
+where
+    Block: BlockT,
+    AccountId: Clone + std::fmt::Display + Codec,
+    C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+    C::Api: MVMApiRuntime<Block, AccountId>, {
+
+
+    type Error = anyhow::Error;
+
+    fn get_module(&self, module_id: &ModuleId) -> anyhow::Result<Option<Vec<u8>>> {
+        let api = self.client.runtime_api();
+        let at = BlockId::hash(self.at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash));
+        let bytes: Option<Vec<u8>> = api
+            .get_module(&at, bcs_alt::to_bytes(module_id).unwrap())
+            .map_err(runtime_error_into_rpc_err4)?
+            .map_err(runtime_error_into_rpc_err5)?;
+        Ok(bytes)
+    }
+}
+impl<C, Block,AccountId>  ResourceResolver for ApiStateView<C, <Block as BlockT>::Hash,AccountId,Block> 
+where
+    Block: BlockT,
+    AccountId: Clone + std::fmt::Display + Codec,
+    C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+    C::Api: MVMApiRuntime<Block, AccountId>,
+ {
+
+    type Error = anyhow::Error;
+
+    fn get_resource(&self, address: &AccountAddress, tag: &StructTag) -> anyhow::Result<Option<Vec<u8>>> {
+        let api = self.client.runtime_api();
+        let at = BlockId::hash(self.at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash));
+        let bytes: Option<Vec<u8>> = api
+            .get_resource(&at, self.account_id.clone(), bcs_alt::to_bytes(tag).unwrap())
+            .map_err(runtime_error_into_rpc_err4)?
+            .map_err(runtime_error_into_rpc_err5)?;
+        Ok(bytes)
+    }
+}
+
 // Estimation struct with serde.
 #[derive(Serialize, Deserialize)]
 pub struct Estimation {
@@ -98,6 +166,13 @@ pub trait MVMApiRpc<BlockHash, AccountId> {
 
     #[method(name = "mvm_getResources")]
     fn get_resources(
+        &self,
+        account_id: AccountId,
+        tag: Bytes,
+        at: Option<BlockHash>,
+    ) -> Result<Option<Bytes>>;
+    #[method(name = "mvm_getResources2")]
+    fn get_resources2(
         &self,
         account_id: AccountId,
         tag: Bytes,
@@ -352,6 +427,46 @@ println!("make_function_call=result==={:?}===",f);
        
     }
 
+
+    fn get_resources2(
+        &self,
+        account_id: AccountId,
+        tag: Bytes,
+        at: Option<<Block as BlockT>::Hash>,
+    ) -> Result<Option<Bytes>> {
+        let api = self.client.runtime_api();
+        let att = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash));
+            let (tag_bcs,tag,module_id)=convert::parse_struct_tag_string(tag.into_vec()).unwrap();
+
+        let f: Option<Vec<u8>> = api
+            .get_resource(&att, account_id.clone(), tag_bcs)
+            .map_err(runtime_error_into_rpc_err4)?
+            .map_err(runtime_error_into_rpc_err5)?;
+    let view=ApiStateView::new(self.client.clone(),account_id.clone(),at);
+        use move_resource_viewer::MoveValueAnnotator;
+     let annotator = move_resource_viewer::MoveValueAnnotator::new(&view);
+use crate::move_types::{MoveResource};
+
+        let f:MoveResource=   annotator
+                                .view_resource(&tag, &f.unwrap())
+                                .and_then(|result| {
+                                    println!("=get_resources2===={:?}",result);
+                                          result.try_into()
+                                }).map_err(runtime_error_into_rpc_err5)?;
+
+    //  let module: Option<Vec<u8>> = api
+    //         .get_module(&at, module_id)
+    //         .map_err(runtime_error_into_rpc_err4)?
+    //         .map_err(runtime_error_into_rpc_err5)?;
+        // let f = convert::struct_to_json(&tag,f.unwrap(),module.unwrap()).map_err(runtime_error_into_rpc_err4).map_err(runtime_error_into_rpc_err6)?;
+            let ff=serde_json::to_vec(&f).ok();
+            println!("get_resources2=result==={:?}=={:?}=",f,ff);
+        let f=ff;
+            Ok(f.map(Into::into))
+       
+    }
 }
 const RUNTIME_ERROR: i32 = 500;
 
