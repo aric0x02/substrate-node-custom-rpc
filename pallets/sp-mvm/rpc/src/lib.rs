@@ -178,6 +178,13 @@ pub trait MVMApiRpc<BlockHash, AccountId> {
         tag: Bytes,
         at: Option<BlockHash>,
     ) -> Result<Option<Bytes>>;
+    #[method(name = "mvm_getResources3")]
+    fn get_resources3(
+        &self,
+        account_id: AccountId,
+        tag: Bytes,
+        at: Option<BlockHash>,
+    ) -> Result<Option<Bytes>>;
 }
 
 pub struct MVMApi<C, P> {
@@ -463,6 +470,46 @@ use crate::move_types::{MoveResource};
         // let f = convert::struct_to_json(&tag,f.unwrap(),module.unwrap()).map_err(runtime_error_into_rpc_err4).map_err(runtime_error_into_rpc_err6)?;
             let ff=serde_json::to_vec(&f).ok();
             println!("get_resources2=result==={:?}=={:?}=",f,ff);
+        let f=ff;
+            Ok(f.map(Into::into))
+       
+    }
+
+ fn get_resources3(
+        &self,
+        account_id: AccountId,
+        tag: Bytes,
+        at: Option<<Block as BlockT>::Hash>,
+    ) -> Result<Option<Bytes>> {
+        let api = self.client.runtime_api();
+        let att = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash));
+            let (tag_bcs,tag,module_id)=convert::parse_struct_tag_string3(tag.into_vec()).unwrap();
+
+        let f: Option<Vec<u8>> = api
+            .get_resource(&att, account_id.clone(), tag_bcs)
+            .map_err(runtime_error_into_rpc_err4)?
+            .map_err(runtime_error_into_rpc_err5)?;
+    let view=ApiStateView::new(self.client.clone(),account_id.clone(),at);
+        use move_resource_viewer::MoveValueAnnotator;
+     let annotator = move_resource_viewer::MoveValueAnnotator::new(&view);
+use crate::move_types::{MoveResource};
+
+        let f:MoveResource=   annotator
+                                .view_resource(&tag, &f.unwrap())
+                                .and_then(|result| {
+                                    println!("=get_resources2===={:?}",result);
+                                          result.try_into()
+                                }).map_err(runtime_error_into_rpc_err5)?;
+
+    //  let module: Option<Vec<u8>> = api
+    //         .get_module(&at, module_id)
+    //         .map_err(runtime_error_into_rpc_err4)?
+    //         .map_err(runtime_error_into_rpc_err5)?;
+        // let f = convert::struct_to_json(&tag,f.unwrap(),module.unwrap()).map_err(runtime_error_into_rpc_err4).map_err(runtime_error_into_rpc_err6)?;
+            let ff=serde_json::to_vec(&f).ok();
+            println!("get_resources3=result==={:?}=={:?}=",f,ff);
         let f=ff;
             Ok(f.map(Into::into))
        

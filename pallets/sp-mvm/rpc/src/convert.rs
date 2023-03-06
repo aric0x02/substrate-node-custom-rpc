@@ -46,6 +46,17 @@ use std::{
     sync::Arc,
 };
 
+pub fn parse_struct_tag_string3(
+    tag: Vec<u8>,
+) -> Result<(Vec<u8>,StructTag,Vec<u8>), Vec<u8>> {
+    let tag_str = std::str::from_utf8(&tag).unwrap();
+    let movestructtag:MoveStructTag = MoveStructTag::from_str(tag_str).unwrap();
+    let struct_tag=StructTag::try_from(movestructtag).unwrap();
+// let struct_tag:StructTag=bcs_alt::from_bytes(&tag).unwrap();
+ let module_id = ModuleId::new(struct_tag.address.clone(), struct_tag.module.to_owned());
+    Ok((bcs_alt::to_bytes(&struct_tag).unwrap(),struct_tag,bcs_alt::to_bytes(&module_id).unwrap()))
+}
+
 pub fn parse_struct_tag_string(
     tag: Vec<u8>,
 ) -> Result<(Vec<u8>,StructTag,Vec<u8>), Vec<u8>> {
