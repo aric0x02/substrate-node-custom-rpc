@@ -131,7 +131,6 @@ mod boxed {
 
     pub trait GetStaticMoveVmCell {
         type Vm: move_vm::Vm;
-
         fn get_move_vm_cell() -> &'static OnceCell<Self::Vm>;
 
         fn move_vm_cell_is_inited() -> bool

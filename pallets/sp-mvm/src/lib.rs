@@ -1010,6 +1010,8 @@ pub mod pallet {
         VmMaxTypeDepthReached,
         /// Vm max value depth reached
         VmMaxValueDepthReached,
+        /// Vm extension error
+        VmExtensionError,
         /// Unknown status.
         UnknownStatus,
 

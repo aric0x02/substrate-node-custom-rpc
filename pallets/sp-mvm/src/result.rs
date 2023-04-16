@@ -296,6 +296,7 @@ impl<T: Config> From<StatusCode> for Error<T> {
             StatusCode::CALL_STACK_OVERFLOW => Self::CallStackOverflow,
             StatusCode::VM_MAX_TYPE_DEPTH_REACHED => Self::VmMaxTypeDepthReached,
             StatusCode::VM_MAX_VALUE_DEPTH_REACHED => Self::VmMaxValueDepthReached,
+            StatusCode::VM_EXTENSION_ERROR => Self::VmExtensionError,
             StatusCode::UNKNOWN_STATUS => Self::UnknownStatus,
 
             StatusCode::EXECUTED => unreachable!(),

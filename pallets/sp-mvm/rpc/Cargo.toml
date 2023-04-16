@@ -68,8 +68,3 @@ default-features = false
 [dependencies.move-resource-viewer]
 path="../../../../sp-move-vm/language/tools/move-resource-viewer"
 default-features = false
-# [features]
-# default = ["std"]
-# std = [
-# 	"frame-support/std",
-# ]
