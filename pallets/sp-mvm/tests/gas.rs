@@ -8,7 +8,7 @@ use common::addr::*;
 use common::utils;
 
 /// Out of gas error code.
-const OUT_OF_GAS_ERROR_CODE: u8 = 150;
+const OUT_OF_GAS_ERROR_CODE: [u8;4] = [155, 0, 0, 0];
 
 /// Minimum gas limit.
 const MINIMAL_GAS_LIMIT: u64 = 1;

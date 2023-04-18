@@ -26,7 +26,7 @@ const DEFAULT_GAS_LIMIT: u64 = 1_000_000;
 /// Publish module with storage check.
 pub fn publish_module(signer: AccountId, module: &Asset, gas_limit: Option<u64>) -> PsResult {
     let result = Mvm::publish_module(
-        Origin::signed(signer),
+        RuntimeOrigin::signed(signer),
         module.bytes().to_vec(),
         gas_limit.unwrap_or(DEFAULT_GAS_LIMIT),
     )?;
@@ -37,7 +37,7 @@ pub fn publish_module(signer: AccountId, module: &Asset, gas_limit: Option<u64>)
 /// Publish module as root with storage check.
 pub fn publish_module_as_root(module: &Asset, gas_limit: Option<u64>) -> PsResult {
     let result = Mvm::publish_module(
-        Origin::root(),
+        RuntimeOrigin::root(),
         module.bytes().to_vec(),
         gas_limit.unwrap_or(DEFAULT_GAS_LIMIT),
     )?;
@@ -48,7 +48,7 @@ pub fn publish_module_as_root(module: &Asset, gas_limit: Option<u64>) -> PsResul
 /// Publish package with storage check.
 pub fn publish_package(signer: AccountId, package: &Package, gas_limit: Option<u64>) -> PsResult {
     let result = Mvm::publish_package(
-        Origin::signed(signer),
+        RuntimeOrigin::signed(signer),
         package.bytes().to_vec(),
         gas_limit.unwrap_or(DEFAULT_GAS_LIMIT),
     )?;
@@ -63,7 +63,7 @@ pub fn publish_package(signer: AccountId, package: &Package, gas_limit: Option<u
 /// Publish package as root with storage check.
 pub fn publish_package_as_root(package: &Package, gas_limit: Option<u64>) -> PsResult {
     let result = Mvm::publish_package(
-        Origin::root(),
+        RuntimeOrigin::root(),
         package.bytes().to_vec(),
         gas_limit.unwrap_or(DEFAULT_GAS_LIMIT),
     )?;
@@ -81,7 +81,7 @@ pub fn execute_tx(origin: AccountId, tx: &Asset, gas_limit: Option<u64>) -> PsRe
     // get bytecode:
     let bc = tx.bytes().to_vec();
     // execute VM tx:
-    let result = Mvm::execute(Origin::signed(origin), bc, gas_limit);
+    let result = Mvm::execute(RuntimeOrigin::signed(origin), bc, gas_limit);
     eprintln!("execute tx result: {:?}", result);
     result
 }
@@ -92,7 +92,7 @@ pub fn execute_tx_by_root(tx: &Asset, gas_limit: Option<u64>) -> PsResult {
     // get bytecode:
     let bc = tx.bytes().to_vec();
     // execute VM tx:
-    let result = Mvm::execute(Origin::root(), bc, gas_limit);
+    let result = Mvm::execute(RuntimeOrigin::root(), bc, gas_limit);
     eprintln!("execute tx result: {:?}", result);
     result
 }

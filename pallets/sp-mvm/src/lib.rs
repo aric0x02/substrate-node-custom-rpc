@@ -59,7 +59,7 @@ pub mod pallet {
     use groupsign::utils::ensure_groupsign;
     use mvm::*;
     use weights::WeightInfo;
-    use types::MoveModuleId;
+    // use types::MoveModuleId;
 
     use crate::storage::boxed::VmStorageBoxAdapter as StorageAdapter;
     use crate::balance::boxed::BalancesAdapter;
@@ -86,12 +86,12 @@ pub mod pallet {
     use move_vm::types::Transaction;
     use move_vm::types::VmResult;
     use move_vm::types::ModulePackage;
-    use move_vm::abi::{Field, Func, ModuleAbi, StructDef, Type, TypeAbilities};
+    use move_vm::abi::{ ModuleAbi};
     use move_binary_format::CompiledModule;
     use move_core_types::account_address::AccountAddress;
     use move_core_types::language_storage::CORE_CODE_ADDRESS;
     use move_core_types::language_storage::ModuleId as InternalModuleId;
-    use move_core_types::identifier::{IdentStr, Identifier};
+    use move_core_types::identifier::{ Identifier};
     #[cfg(not(feature = "std"))]
     extern crate alloc;
     #[cfg(not(feature = "std"))]
@@ -566,6 +566,7 @@ pub mod pallet {
         fn move_module_id_to_module_id(owner: &T::AccountId,module:Vec<u8>)->Result<Option<Vec<u8>>, Vec<u8>>{
                 Ok(Some(InternalModuleId::new(addr::account_to_account_address(&owner),Identifier::from_utf8(module).unwrap()).access_vector()))
         }
+        #[allow(unused)]
         fn get_abi(owner: &T::AccountId,module:Vec<u8>)->Result<Option<Vec<u8>>, Vec<u8>>{
             let abi = ModuleAbi::from(CompiledModule::deserialize(&Self::get_module_abi_by_address_and_name(owner,module)?.unwrap()).unwrap());
             ensure!(

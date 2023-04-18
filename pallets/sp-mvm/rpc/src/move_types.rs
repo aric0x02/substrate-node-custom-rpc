@@ -31,7 +31,7 @@ use move_resource_viewer::{AnnotatedMoveStruct, AnnotatedMoveValue};
 // extern crate serde_alt as serde;
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
-    prelude::*,
+    // prelude::*,
     // collections::btree_map::BTreeMap,
     convert::{From, Into, TryFrom, TryInto},
     fmt,
@@ -1225,7 +1225,7 @@ mod tests {
 
     use serde::{de::DeserializeOwned, Serialize};
     use serde_json::{json, to_value, Value};
-    use alloc::{boxed::Box};
+    // use alloc::{boxed::Box};
     use core::{ convert::TryFrom, fmt::Debug};
 
     #[test]
@@ -1245,7 +1245,7 @@ mod tests {
         assert_serialize(Vector(Box::new(U8)), json!("vector<u8>"));
 
         assert_serialize(
-            Struct(Box::new(create_nested_struct())),
+            Struct(create_nested_struct()),
             json!("0x1::Home::ABC<address, 0x1::account::Base<u128, vector<u64>, vector<0x1::type::String>, 0x1::type::String>>"),
         );
     }
@@ -1261,7 +1261,7 @@ mod tests {
                 (identifier("field_u64"), U64(7)),
                 (identifier("field_u128"), U128(7)),
                 (identifier("field_bool"), Bool(true)),
-                (identifier("field_address"), Address(address("0xdd"))),
+                (identifier("field_address"), Address(address("0xdd").into())),
                 (
                     identifier("field_vector"),
                     Vector(TypeTag::U128, vec![U128(128)]),
@@ -1274,12 +1274,12 @@ mod tests {
                         vec![(
                             identifier("nested_vector"),
                             Vector(
-                                TypeTag::Struct(Box::new(type_struct("Host"))),
+                                TypeTag::Struct(type_struct("Host")),
                                 vec![Struct(annotated_move_struct(
                                     "String",
                                     vec![
-                                        (identifier("address1"), Address(address("0x0"))),
-                                        (identifier("address2"), Address(address("0x123"))),
+                                        (identifier("address1"), Address(address("0x0").into())),
+                                        (identifier("address2"), Address(address("0x123").into())),
                                     ],
                                 ))],
                             ),
@@ -1316,7 +1316,7 @@ mod tests {
             "Values",
             vec![(
                 identifier("address_0x0"),
-                AnnotatedMoveValue::Address(address("0x0")),
+                AnnotatedMoveValue::Address(address("0x0").into()),
             )],
         ))
         .unwrap();
@@ -1479,30 +1479,30 @@ mod tests {
     fn create_nested_struct() -> StructTag {
         let account = create_generic_type_struct();
         StructTag {
-            address: address("0x1"),
+            address: address("0x1").into(),
             module: identifier("Home"),
             name: identifier("ABC"),
-            type_params: vec![TypeTag::Address, TypeTag::Struct(Box::new(account))],
+            type_params: vec![TypeTag::Address, TypeTag::Struct(account)],
         }
     }
 
     fn create_generic_type_struct() -> StructTag {
         StructTag {
-            address: address("0x1"),
+            address: address("0x1").into(),
             module: identifier("account"),
             name: identifier("Base"),
             type_params: vec![
                 TypeTag::U128,
                 TypeTag::Vector(Box::new(TypeTag::U64)),
-                TypeTag::Vector(Box::new(TypeTag::Struct(Box::new(type_struct("String"))))),
-                TypeTag::Struct(Box::new(type_struct("String"))),
+                TypeTag::Vector(Box::new(TypeTag::Struct(type_struct("String")))),
+                TypeTag::Struct(type_struct("String")),
             ],
         }
     }
 
     fn type_struct(t: &str) -> StructTag {
         StructTag {
-            address: address("0x1"),
+            address: address("0x1").into(),
             module: identifier("type"),
             name: identifier(t),
             type_params: vec![],
@@ -1510,7 +1510,7 @@ mod tests {
     }
 
     fn address(hex: &str) -> Address {
-        Address::from_hex_literal(hex).unwrap()
+        Address(AccountAddress::from_hex_literal(hex).unwrap())
     }
 
     fn annotated_move_struct(

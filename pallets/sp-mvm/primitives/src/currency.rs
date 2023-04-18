@@ -48,7 +48,6 @@ const fn const_slice_eq(a: &[u8], b: &[u8]) -> bool {
 
 macro_rules! static_assert {
     ($cond:expr) => {
-        #[deny(const_err)]
         const _: [(); 1] = [(); $cond as usize];
     };
 }

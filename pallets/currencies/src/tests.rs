@@ -24,7 +24,7 @@ use super::*;
 use frame_support::{assert_noop, assert_ok};
 use mock::{
     alice, bob, eva, AccountId, AdaptedBasicCurrency, CouncilAccount, Currencies, DustAccount,
-    Event, ExtBuilder, NativeCurrency, Origin, PalletBalances, Runtime, System, Tokens, DOT,
+    ExtBuilder, NativeCurrency, RuntimeOrigin, PalletBalances,Test, System, Tokens, DOT,
     ID_1, NATIVE_CURRENCY_ID, X_TOKEN_ID,
 };
 use sp_runtime::traits::BadOrigin;
@@ -229,7 +229,7 @@ fn basic_currency_adapting_pallet_balances_deposit_throw_error_when_actual_depos
             assert_eq!(PalletBalances::total_issuance(), 200);
             assert_noop!(
                 AdaptedBasicCurrency::deposit(&eva(), 1),
-                Error::<Runtime>::DepositFailed
+                Error::<Test>::DepositFailed
             );
             assert_eq!(PalletBalances::total_balance(&eva()), 0);
             assert_eq!(PalletBalances::total_issuance(), 200);
@@ -282,7 +282,7 @@ fn update_balance_call_should_work() {
         .build()
         .execute_with(|| {
             assert_ok!(Currencies::update_balance(
-                Origin::root(),
+                RuntimeOrigin::root(),
                 alice(),
                 NATIVE_CURRENCY_ID,
                 -10
@@ -290,7 +290,7 @@ fn update_balance_call_should_work() {
             assert_eq!(NativeCurrency::free_balance(&alice()), 90);
             assert_eq!(Currencies::free_balance(X_TOKEN_ID, &alice()), 100);
             assert_ok!(Currencies::update_balance(
-                Origin::root(),
+                RuntimeOrigin::root(),
                 alice(),
                 X_TOKEN_ID,
                 10
@@ -323,12 +323,12 @@ fn call_event_should_work() {
             ));
             assert_eq!(Currencies::free_balance(X_TOKEN_ID, &alice()), 50);
             assert_eq!(Currencies::free_balance(X_TOKEN_ID, &bob()), 150);
-            System::assert_last_event(Event::Currencies(crate::Event::Transferred(
+            System::assert_last_event(crate::Event::Transferred(
                 X_TOKEN_ID,
                 alice(),
                 bob(),
                 50,
-            )));
+            ).into());
 
             assert_ok!(<Currencies as MultiCurrency<AccountId>>::transfer(
                 X_TOKEN_ID,
@@ -338,12 +338,12 @@ fn call_event_should_work() {
             ));
             assert_eq!(Currencies::free_balance(X_TOKEN_ID, &alice()), 40);
             assert_eq!(Currencies::free_balance(X_TOKEN_ID, &bob()), 160);
-            System::assert_last_event(Event::Currencies(crate::Event::Transferred(
+            System::assert_last_event(crate::Event::Transferred(
                 X_TOKEN_ID,
                 alice(),
                 bob(),
                 10,
-            )));
+            ).into());
 
             assert_ok!(<Currencies as MultiCurrency<AccountId>>::deposit(
                 X_TOKEN_ID,
@@ -351,11 +351,11 @@ fn call_event_should_work() {
                 100
             ));
             assert_eq!(Currencies::free_balance(X_TOKEN_ID, &alice()), 140);
-            System::assert_last_event(Event::Currencies(crate::Event::Deposited(
+            System::assert_last_event(crate::Event::Deposited(
                 X_TOKEN_ID,
                 alice(),
                 100,
-            )));
+            ).into());
 
             assert_ok!(<Currencies as MultiCurrency<AccountId>>::withdraw(
                 X_TOKEN_ID,
@@ -363,18 +363,18 @@ fn call_event_should_work() {
                 20
             ));
             assert_eq!(Currencies::free_balance(X_TOKEN_ID, &alice()), 120);
-            System::assert_last_event(Event::Currencies(crate::Event::Withdrawn(
+            System::assert_last_event(crate::Event::Withdrawn(
                 X_TOKEN_ID,
                 alice(),
                 20,
-            )));
+            ).into());
         });
 }
 
 #[test]
 fn sweep_dust_tokens_works() {
     ExtBuilder::default().build().execute_with(|| {
-        orml_tokens::Accounts::<Runtime>::insert(
+        orml_tokens::Accounts::<Test>::insert(
             bob(),
             DOT,
             orml_tokens::AccountData {
@@ -383,7 +383,7 @@ fn sweep_dust_tokens_works() {
                 reserved: 0,
             },
         );
-        orml_tokens::Accounts::<Runtime>::insert(
+        orml_tokens::Accounts::<Test>::insert(
             eva(),
             DOT,
             orml_tokens::AccountData {
@@ -392,7 +392,7 @@ fn sweep_dust_tokens_works() {
                 reserved: 0,
             },
         );
-        orml_tokens::Accounts::<Runtime>::insert(
+        orml_tokens::Accounts::<Test>::insert(
             alice(),
             DOT,
             orml_tokens::AccountData {
@@ -401,7 +401,7 @@ fn sweep_dust_tokens_works() {
                 reserved: 0,
             },
         );
-        orml_tokens::Accounts::<Runtime>::insert(
+        orml_tokens::Accounts::<Test>::insert(
             DustAccount::get(),
             DOT,
             orml_tokens::AccountData {
@@ -410,25 +410,25 @@ fn sweep_dust_tokens_works() {
                 reserved: 0,
             },
         );
-        orml_tokens::TotalIssuance::<Runtime>::insert(DOT, 104);
+        orml_tokens::TotalIssuance::<Test>::insert(DOT, 104);
 
         let accounts = vec![bob(), eva(), alice()];
 
         assert_noop!(
-            Currencies::sweep_dust(Origin::signed(bob()), DOT, accounts.clone()),
+            Currencies::sweep_dust(RuntimeOrigin::signed(bob()), DOT, accounts.clone()),
             DispatchError::BadOrigin
         );
 
         assert_ok!(Currencies::sweep_dust(
-            Origin::signed(CouncilAccount::get()),
+            RuntimeOrigin::signed(CouncilAccount::get()),
             DOT,
             accounts.clone()
         ));
-        System::assert_last_event(Event::Currencies(crate::Event::DustSwept(DOT, bob(), 1)));
+        System::assert_last_event(crate::Event::DustSwept(DOT, bob(), 1).into());
 
         // bob's account is gone
         assert_eq!(
-            orml_tokens::Accounts::<Runtime>::contains_key(bob(), DOT),
+            orml_tokens::Accounts::<Test>::contains_key(bob(), DOT),
             false
         );
         assert_eq!(Currencies::free_balance(DOT, &bob()), 0);
@@ -447,7 +447,7 @@ fn sweep_dust_tokens_works() {
 fn sweep_dust_native_currency_works() {
     use frame_support::traits::StoredMap;
     ExtBuilder::default().build().execute_with(|| {
-        assert_ok!(<Runtime as pallet_balances::Config>::AccountStore::insert(
+        assert_ok!(<Test as pallet_balances::Config>::AccountStore::insert(
             &bob(),
             pallet_balances::AccountData {
                 free: 1,
@@ -456,7 +456,7 @@ fn sweep_dust_native_currency_works() {
                 fee_frozen: 0,
             },
         ));
-        assert_ok!(<Runtime as pallet_balances::Config>::AccountStore::insert(
+        assert_ok!(<Test as pallet_balances::Config>::AccountStore::insert(
             &eva(),
             pallet_balances::AccountData {
                 free: 2,
@@ -465,7 +465,7 @@ fn sweep_dust_native_currency_works() {
                 fee_frozen: 0,
             },
         ));
-        assert_ok!(<Runtime as pallet_balances::Config>::AccountStore::insert(
+        assert_ok!(<Test as pallet_balances::Config>::AccountStore::insert(
             &alice(),
             pallet_balances::AccountData {
                 free: 0,
@@ -474,7 +474,7 @@ fn sweep_dust_native_currency_works() {
                 fee_frozen: 2,
             },
         ));
-        assert_ok!(<Runtime as pallet_balances::Config>::AccountStore::insert(
+        assert_ok!(<Test as pallet_balances::Config>::AccountStore::insert(
             &DustAccount::get(),
             pallet_balances::AccountData {
                 free: 100,
@@ -483,7 +483,7 @@ fn sweep_dust_native_currency_works() {
                 fee_frozen: 0,
             },
         ));
-        pallet_balances::TotalIssuance::<Runtime>::put(104);
+        pallet_balances::TotalIssuance::<Test>::put(104);
 
         assert_eq!(Currencies::free_balance(NATIVE_CURRENCY_ID, &bob()), 1);
         assert_eq!(Currencies::free_balance(NATIVE_CURRENCY_ID, &eva()), 2);
@@ -496,20 +496,20 @@ fn sweep_dust_native_currency_works() {
         let accounts = vec![bob(), eva(), alice()];
 
         assert_noop!(
-            Currencies::sweep_dust(Origin::signed(bob()), NATIVE_CURRENCY_ID, accounts.clone()),
+            Currencies::sweep_dust(RuntimeOrigin::signed(bob()), NATIVE_CURRENCY_ID, accounts.clone()),
             DispatchError::BadOrigin
         );
 
         assert_ok!(Currencies::sweep_dust(
-            Origin::signed(CouncilAccount::get()),
+            RuntimeOrigin::signed(CouncilAccount::get()),
             NATIVE_CURRENCY_ID,
             accounts.clone()
         ));
-        System::assert_last_event(Event::Currencies(crate::Event::DustSwept(
+        System::assert_last_event(crate::Event::DustSwept(
             NATIVE_CURRENCY_ID,
             bob(),
             1,
-        )));
+        ).into());
 
         // bob's account is gone
         assert_eq!(System::account_exists(&bob()), false);

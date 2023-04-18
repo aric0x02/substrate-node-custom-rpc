@@ -2,8 +2,8 @@ use move_contracts_node_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
 	SystemConfig, WASM_BINARY,MvmConfig,TokensConfig,
 };
-use primitives::{currency::CurrencyId  as OtherCurrencyId, AccountId  as OtherAccountId, Signature as OtherSignature, Balance, BlockNumber};
-use constants::SS58_PREFIX;
+// use primitives::{currency::CurrencyId  as OtherCurrencyId, AccountId  as OtherAccountId, Signature as OtherSignature, Balance, BlockNumber};
+// use constants::SS58_PREFIX;
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};

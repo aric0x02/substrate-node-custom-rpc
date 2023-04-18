@@ -30,13 +30,13 @@ pub mod wrappers;
 pub mod move_types;
 pub mod convert;
 pub use crate::move_types::MoveModuleBytecode;
-use anyhow::{bail, ensure, format_err, Context as AnyhowContext, Result as AnyHowResult};
+// use anyhow::{bail, ensure, format_err, Context as AnyhowContext, Result as AnyHowResult};
 use move_core_types::{
 account_address::AccountAddress,
 resolver::{ModuleResolver, ResourceResolver},
-    identifier::Identifier,
-    language_storage::{ModuleId, StructTag, TypeTag},
-    value::{MoveStructLayout, MoveTypeLayout,MoveFieldLayout},
+    // identifier::Identifier,
+    language_storage::{ModuleId, StructTag},
+    // value::{MoveStructLayout, MoveTypeLayout,MoveFieldLayout},
 };
 
 pub struct ApiStateView<C,BlockHash,AccountId,Block> {
@@ -85,7 +85,7 @@ where
 
     type Error = anyhow::Error;
 
-    fn get_resource(&self, address: &AccountAddress, tag: &StructTag) -> anyhow::Result<Option<Vec<u8>>> {
+    fn get_resource(&self, _address: &AccountAddress, tag: &StructTag) -> anyhow::Result<Option<Vec<u8>>> {
         let api = self.client.runtime_api();
         let at = BlockId::hash(self.at.unwrap_or_else(||
 			// If the block hash is not supplied assume the best block.
@@ -445,14 +445,14 @@ println!("make_function_call=result==={:?}===",f);
         let att = BlockId::hash(at.unwrap_or_else(||
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash));
-            let (tag_bcs,tag,module_id)=convert::parse_struct_tag_string(tag.into_vec()).unwrap();
+            let (tag_bcs,tag,_module_id)=convert::parse_struct_tag_string(tag.into_vec()).unwrap();
 
         let f: Option<Vec<u8>> = api
             .get_resource(&att, account_id.clone(), tag_bcs)
             .map_err(runtime_error_into_rpc_err4)?
             .map_err(runtime_error_into_rpc_err5)?;
     let view=ApiStateView::new(self.client.clone(),account_id.clone(),at);
-        use move_resource_viewer::MoveValueAnnotator;
+        // use move_resource_viewer::MoveValueAnnotator;
      let annotator = move_resource_viewer::MoveValueAnnotator::new(&view);
 use crate::move_types::{MoveResource};
 
@@ -485,14 +485,14 @@ use crate::move_types::{MoveResource};
         let att = BlockId::hash(at.unwrap_or_else(||
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash));
-            let (tag_bcs,tag,module_id)=convert::parse_struct_tag_string3(tag.into_vec()).unwrap();
+            let (tag_bcs,tag,_module_id)=convert::parse_struct_tag_string3(tag.into_vec()).unwrap();
 
         let f: Option<Vec<u8>> = api
             .get_resource(&att, account_id.clone(), tag_bcs)
             .map_err(runtime_error_into_rpc_err4)?
             .map_err(runtime_error_into_rpc_err5)?;
     let view=ApiStateView::new(self.client.clone(),account_id.clone(),at);
-        use move_resource_viewer::MoveValueAnnotator;
+        // use move_resource_viewer::MoveValueAnnotator;
      let annotator = move_resource_viewer::MoveValueAnnotator::new(&view);
 use crate::move_types::{MoveResource};
 

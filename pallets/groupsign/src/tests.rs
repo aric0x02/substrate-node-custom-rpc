@@ -5,7 +5,7 @@ use crate::{
     utils::generate_preimage,
 };
 use frame_support::{
-    assert_err_ignore_postinfo, assert_ok, dispatch::PostDispatchInfo, weights::Pays,
+    assert_err_ignore_postinfo, assert_ok, dispatch::{PostDispatchInfo,Pays}, 
 };
 use sp_core::{sr25519};
 use sp_keystore::{SyncCryptoStore, testing::KeyStore};
@@ -26,8 +26,8 @@ fn zero_signature_test() {
 
     new_test_ext().execute_with(move || {
         let f = crate::Pallet::<mock::Test>::groupsign_call(
-            mock::Origin::signed(key_a),
-            Box::new(Call::System(frame_system::Call::remark {
+            mock::RuntimeOrigin::signed(key_a),
+            Box::new(RuntimeCall::System(frame_system::Call::remark {
                 remark: b"That's a remark.".to_vec(),
             })),
             vec![key_a, key_b, key_c],
@@ -73,8 +73,8 @@ fn incorrect_signature_test() {
 
     new_test_ext().execute_with(move || {
         let f = crate::Pallet::<mock::Test>::groupsign_call(
-            mock::Origin::signed(key_a),
-            Box::new(Call::System(frame_system::Call::remark {
+            mock::RuntimeOrigin::signed(key_a),
+            Box::new(RuntimeCall::System(frame_system::Call::remark {
                 remark: b"NixOS is nice and you should use it.".to_vec(),
             })),
             vec![key_a, key_b, key_c],
@@ -99,7 +99,7 @@ fn incorrect_era_test() {
         .sr25519_generate_new(key_types::ACCOUNT, Some("//Eve"))
         .expect("Generated key");
 
-    let call = Call::System(frame_system::Call::remark {
+    let call = RuntimeCall::System(frame_system::Call::remark {
         remark: b"I want some tasty cookies after that.".to_vec(),
     });
 
@@ -124,7 +124,7 @@ fn incorrect_era_test() {
 
     new_test_ext().execute_with(move || {
         let f = crate::Pallet::<mock::Test>::groupsign_call(
-            mock::Origin::signed(key_a),
+            mock::RuntimeOrigin::signed(key_a),
             Box::new(call),
             vec![key_a, key_b, key_c],
             signatures,
@@ -148,7 +148,7 @@ fn correct_call_test() {
         .sr25519_generate_new(key_types::ACCOUNT, Some("//Eve"))
         .expect("Generated key");
 
-    let call = Call::System(frame_system::Call::remark {
+    let call = RuntimeCall::System(frame_system::Call::remark {
         remark: b"NixOS is nice and you should use it.".to_vec(),
     });
 
@@ -184,7 +184,7 @@ fn correct_call_test() {
         System::set_block_number(123);
 
         let f = crate::Pallet::<mock::Test>::groupsign_call(
-            mock::Origin::signed(key_a),
+            mock::RuntimeOrigin::signed(key_a),
             Box::new(call),
             vec![key_a, key_b, key_c],
             signatures,

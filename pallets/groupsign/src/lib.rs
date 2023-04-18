@@ -30,7 +30,7 @@ pub mod pallet {
     use frame_support::{
         dispatch::{DispatchResultWithPostInfo, Dispatchable, GetDispatchInfo, PostDispatchInfo},
         ensure,
-traits::{ConstU32, Get},
+traits::{ConstU32},
 
 storage::bounded_vec::BoundedVec,
         pallet_prelude::*,
@@ -127,7 +127,7 @@ storage::bounded_vec::BoundedVec,
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         /// Do groupsign call.
-
+        #[pallet::call_index(0)]
         #[pallet::weight({
             let dispatch_info = signed_call.get_dispatch_info();
             (

@@ -3,9 +3,9 @@
 
 // use crate::file_format::{Constant, SignatureToken};
 use move_binary_format::file_format::{
-    Ability, AbilitySet, SignatureToken,Constant,  StructHandleIndex, Visibility,
+   SignatureToken,
 };
-use move_core_types::value::{MoveTypeLayout, MoveValue};
+use move_core_types::value::{MoveTypeLayout};
 
 pub fn sig_to_ty(sig: &SignatureToken) -> Option<MoveTypeLayout> {
     match sig {

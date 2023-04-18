@@ -9,7 +9,7 @@ use parity_scale_codec::{Decode, Encode};
 use system::EnsureRoot;
 use frame_support::{
     PalletId, parameter_types,
-    traits::{Everything, ConstU32},
+    traits::{Everything, ConstU32,WithdrawReasons},
     weights::{Weight, constants::WEIGHT_REF_TIME_PER_SECOND},
 };
 use sp_std::vec;
@@ -88,8 +88,8 @@ impl system::Config for Test {
     type BlockWeights = ();
     type BlockLength = ();
     type DbWeight = ();
-    type Origin = Origin;
-    type Call = Call;
+    type RuntimeOrigin = RuntimeOrigin;
+    type RuntimeCall = RuntimeCall;
     type Index = u64;
     type BlockNumber = BlockNumber;
     type Hash = H256;
@@ -97,7 +97,7 @@ impl system::Config for Test {
     type AccountId = AccountId;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type BlockHashCount = BlockHashCount;
     type Version = ();
     type PalletInfo = PalletInfo;
@@ -126,11 +126,11 @@ pub struct MoveVMGasWeightMapping;
 // Just use provided gas.
 impl gas::GasWeightMapping for MoveVMGasWeightMapping {
     fn gas_to_weight(gas: u64) -> Weight {
-        gas.saturating_mul(WEIGHT_PER_GAS)
+        Weight::from_ref_time(gas.saturating_mul(WEIGHT_PER_GAS))
     }
 
     fn weight_to_gas(weight: Weight) -> u64 {
-        u64::try_from(weight.wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
+        u64::try_from(weight.ref_time().wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
     }
 }
 // ----------------- //
@@ -164,7 +164,7 @@ impl balances::Config for Test {
     /// The type for recording an account's balance.
     type Balance = Balance;
     /// The ubiquitous event type.
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = Sys;
@@ -175,15 +175,20 @@ impl balances::Config for Test {
 
 parameter_types! {
     pub const MinVestedTransfer: Balance = 1;
+pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
+	
 }
 
 impl pallet_vesting::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type Currency = Balances;
     type BlockNumberToBalance = ConvertInto;
     type MinVestedTransfer = MinVestedTransfer;
     type WeightInfo = ();
     const MAX_VESTING_SCHEDULES: u32 = 1;
+	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
+
 }
 
 parameter_type_with_key! {
@@ -193,22 +198,25 @@ parameter_type_with_key! {
 }
 
 impl orml_tokens::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type Balance = Balance;
     type Amount = primitives::Amount;
     type CurrencyId = CurrencyId;
     type WeightInfo = ();
     type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = ();
+    // type OnDust = ();
     type MaxLocks = MaxLocks;
     type DustRemovalWhitelist = Everything;
+	type CurrencyHooks = ();
+	type ReserveIdentifier = [u8; 8];
+	type MaxReserves = ();
 }
 
 parameter_types! {
     pub const GetNativeCurrencyId: CurrencyId = CurrencyId::NATIVE;
 }
 impl module_currencies::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type CurrencyId = CurrencyId;
     type MultiCurrency = Tokens;
     type NativeCurrency = BasicCurrencyAdapter<Test, Balances, Amount, BlockNumber>;
@@ -223,7 +231,7 @@ parameter_types! {
     pub const MVMPalletId: PalletId = PalletId(*b"_nox/mvm");
 }
 impl sp_mvm::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type GasWeightMapping = MoveVMGasWeightMapping;
     type UpdateOrigin = EnsureRoot<AccountId>;
     type PalletId = MVMPalletId;
@@ -239,11 +247,11 @@ parameter_types! {
 }
 
 impl groupsign::Config for Test {
-    type Event = Event;
-    type Call = Call;
+    type RuntimeEvent = RuntimeEvent;
+    type Call = RuntimeCall;
     type Public = AccountId;
     type Signature = AnySignature;
-    type MyOrigin = Origin;
+    type MyOrigin = RuntimeOrigin;
     type WeightInfo = PontemWeights<Self>;
 }
 
@@ -349,7 +357,7 @@ pub fn roll_block_to(n: u64) {
 }
 
 /// Get last event.
-pub fn last_event() -> Event {
+pub fn last_event() -> RuntimeEvent {
     {
         let events = Sys::events();
         println!("events: {:?}", events);

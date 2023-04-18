@@ -10,7 +10,7 @@ use std::{fmt, str::FromStr};
 /// This is represented in a string as a 64 character hex string, sometimes
 /// shortened by stripping leading 0s, and adding a 0x.
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct Address(AccountAddress);
+pub struct Address(pub AccountAddress);
 
 impl Address {
     pub fn inner(&self) -> &AccountAddress {
@@ -83,7 +83,7 @@ impl<'de> Deserialize<'de> for Address {
 mod tests {
     use crate::address::Address;
 
-    use aptos_types::account_address::AccountAddress;
+    use move_core_types::account_address::AccountAddress;
 
     use serde_json::{json, Value};
 
@@ -117,7 +117,7 @@ mod tests {
         let address: Address = serde_json::from_value(json!("0x1")).unwrap();
 
         let account_address: AccountAddress = address.into();
-        assert_eq!(account_address, AccountAddress::ONE);
+        assert_eq!(account_address, AccountAddress::from_hex_literal("0x1").unwrap());
 
         let new_address: Address = account_address.into();
         assert_eq!(new_address, address);
@@ -128,7 +128,7 @@ mod tests {
         let address: Address = serde_json::from_value(json!("0x1")).unwrap();
 
         let account_address: AccountAddress = (&address).into();
-        assert_eq!(account_address, AccountAddress::ONE);
+        assert_eq!(account_address, AccountAddress::from_hex_literal("0x1").unwrap());
 
         let new_address: Address = account_address.into();
         assert_eq!(new_address, address);

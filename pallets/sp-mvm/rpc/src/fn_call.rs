@@ -4,7 +4,7 @@ use anyhow::{bail, Error, Result};
 // use move_symbol_pool::Symbol;
 use move_core_types::account_address::AccountAddress;
 use move_core_types::identifier::Identifier;
-use move_core_types::language_storage::{CORE_CODE_ADDRESS, TypeTag};
+// use move_core_types::language_storage::{CORE_CODE_ADDRESS, TypeTag};
 use move_core_types::value::{MoveTypeLayout, MoveValue};
 
 // use move_package::source_package::parsed_manifest::AddressDeclarations;
@@ -12,17 +12,17 @@ use move_core_types::value::{MoveTypeLayout, MoveValue};
 // use lang::bytecode::{find, SearchParams};
 // use lang::bytecode::info::{BytecodeInfo, Type};
 // use crate::context::Context;
-use move_vm::abi::{Field, Func, ModuleAbi, StructDef, TypeAbilities};
+// use move_vm::abi::{Field, Func, ModuleAbi, StructDef, TypeAbilities};
 use crate::info::{find_script_function};
 use crate::model::{new_func_tx, Signers, from_str};
-use move_vm::types::{Transaction, Call, Signer, TxV1};
+use move_vm::types::{ Signer};
 // use crate::call::parser::parse_vec;
 // use crate::call::bytecode::DoveBytecode;
 use crate::move_types::MoveModuleBytecode;
 
 use move_binary_format::CompiledModule;
 use move_core_types::language_storage::ModuleId as InternalModuleId;
-use codec::{Encode, Decode, Error as CodecError};
+use codec::{Encode};
 use crate::addr;
 //  use std::String;
 pub fn parse_function_string(
@@ -55,6 +55,7 @@ pub fn move_module_id_to_module_id<AccountId: Encode>(
         .access_vector(),
     ))
 }
+#[allow(unused)]
 fn diem_root_address() -> AccountAddress {
     AccountAddress::from_hex_literal("0xA550C18")
         .expect("Parsing valid hex literal should always succeed")
@@ -262,7 +263,7 @@ fn select_function(
  println!("select_function=in=236==");
         if type_tag.len() != script.type_params_count() {
  println!("select_function=in==238=");
-            return Err(anyhow::bail!(
+            return Err(anyhow::anyhow!(
                 "Unable to parse AccountAddress. Maximum address length is {}.  Actual {}",
                 type_tag.len(),
                 script.type_params_count()
@@ -273,7 +274,7 @@ fn select_function(
         // .map(|(signers, args)| {(i, script, signers, args)})
     } else {
  println!("select_function=in==249=");
-        Err(anyhow::bail!(
+        Err(anyhow::anyhow!(
             "Unable to parse AccountAddress. Maximum address length is {}. ",
             type_tag.len()
         ))
@@ -431,14 +432,14 @@ pub fn pontem_parse_address(addr: &str) -> Result<AccountAddress> {
         let address = crate::addr::account_to_account_address(&signer);
         Ok(address)
     } else {
-        let mut addr = addr.to_string();
+        let addr = addr.to_string();
         // if !addr.starts_with("0x") {
         //     addr = format!("0x{}", addr);
         // }
         // try parsing hex diem/aptos address with optional 0x prefix
         let max_hex_len = AccountAddress::LENGTH * 2 + 2;
         if addr.len() > max_hex_len {
-            return Err(anyhow::bail!(
+            return Err(anyhow::anyhow!(
                 "Unable to parse AccountAddress. Maximum address length is {}.  Actual {}",
                 max_hex_len,
                 addr
@@ -449,7 +450,7 @@ pub fn pontem_parse_address(addr: &str) -> Result<AccountAddress> {
             .with_context(|| format!("Address {:?} is not a valid diem/pont address", addr))
     }
 }
-
+#[allow(unused)]
 fn parse_address(
     arg_value: &str,
     // addr_map: &AddressDeclarations,
@@ -475,11 +476,12 @@ fn parse_address(
 
 #[cfg(test)]
 mod call_tests {
+use move_core_types::value::{MoveTypeLayout, MoveValue};
     use move_core_types::language_storage::CORE_CODE_ADDRESS;
     use move_core_types::account_address::AccountAddress;
-    use lang::bytecode::info::Type;
-    use crate::call::model::ScriptArg;
-    use crate::call::fn_call::prepare_function_signature;
+    // use crate::info::Type;
+    // use crate::model::ScriptArg;
+    use crate::fn_call::prepare_function_signature;
 
     fn s(v: &str) -> String {
         v.to_string()
@@ -492,58 +494,54 @@ mod call_tests {
     #[test]
     fn test_args_types() {
         let (signers, args) =
-            prepare_function_signature(&[], &[], true, &Default::default()).unwrap();
+            prepare_function_signature(&[], &[]).unwrap();
         assert_eq!(signers.len(), 0);
         assert_eq!(args.len(), 0);
 
         let (signers, args) =
-            prepare_function_signature(&[Type::U8], &[s("1")], true, &Default::default())
+            prepare_function_signature(&[MoveTypeLayout::U8], &[s("1")])
                 .unwrap();
         assert_eq!(signers.len(), 0);
-        assert_eq!(args, vec![ScriptArg::U8(1)]);
+        assert_eq!(args, vec![MoveValue::U8(1)]);
 
         let (signers, args) = prepare_function_signature(
-            &[Type::Bool, Type::Bool],
+            &[MoveTypeLayout::Bool, MoveTypeLayout::Bool],
             &[s("true"), s("false")],
-            true,
-            &Default::default(),
         )
         .unwrap();
         assert_eq!(signers.len(), 0);
-        assert_eq!(args, vec![ScriptArg::Bool(true), ScriptArg::Bool(false)]);
+        assert_eq!(args, vec![MoveValue::Bool(true), MoveValue::Bool(false)]);
 
         let (signers, args) = prepare_function_signature(
-            &[Type::U64, Type::U64, Type::U128],
+            &[MoveTypeLayout::U64, MoveTypeLayout::U64, MoveTypeLayout::U128],
             &[s("0"), s("1000000000"), s("10000000000000000")],
-            true,
-            &Default::default(),
         )
         .unwrap();
         assert_eq!(signers.len(), 0);
         assert_eq!(
             args,
             vec![
-                ScriptArg::U64(0),
-                ScriptArg::U64(1000000000),
-                ScriptArg::U128(10000000000000000),
+                MoveValue::U64(0),
+                MoveValue::U64(1000000000),
+                MoveValue::U128(10000000000000000),
             ]
         );
 
         let (signers, args) =
-            prepare_function_signature(&[Type::Address], &[s("0x1")], true, &Default::default())
+            prepare_function_signature(&[MoveTypeLayout::Address], &[s("0x1")])
                 .unwrap();
         assert_eq!(signers.len(), 0);
-        assert_eq!(args, vec![ScriptArg::Address(CORE_CODE_ADDRESS)]);
+        assert_eq!(args, vec![MoveValue::Address(CORE_CODE_ADDRESS)]);
 
         let (signers, args) = prepare_function_signature(
             &[
-                Type::Vector(Box::new(Type::Bool)),
-                Type::Vector(Box::new(Type::U8)),
-                Type::Vector(Box::new(Type::U8)),
-                Type::Vector(Box::new(Type::U8)),
-                Type::Vector(Box::new(Type::U64)),
-                Type::Vector(Box::new(Type::U128)),
-                Type::Vector(Box::new(Type::Address)),
+                MoveTypeLayout::Vector(Box::new(MoveTypeLayout::Bool)),
+                MoveTypeLayout::Vector(Box::new(MoveTypeLayout::U8)),
+                MoveTypeLayout::Vector(Box::new(MoveTypeLayout::U8)),
+                MoveTypeLayout::Vector(Box::new(MoveTypeLayout::U8)),
+                MoveTypeLayout::Vector(Box::new(MoveTypeLayout::U64)),
+                MoveTypeLayout::Vector(Box::new(MoveTypeLayout::U128)),
+                MoveTypeLayout::Vector(Box::new(MoveTypeLayout::Address)),
             ],
             &[
                 s("[true, false]"),
@@ -554,21 +552,19 @@ mod call_tests {
                 s("[0]"),
                 s("[0x1, 0x2]"),
             ],
-            true,
-            &Default::default(),
         )
         .unwrap();
         assert_eq!(signers.len(), 0);
         assert_eq!(
             args,
             vec![
-                ScriptArg::VectorBool(vec![true, false]),
-                ScriptArg::VectorU8(vec![100]),
-                ScriptArg::VectorU8(vec![]),
-                ScriptArg::VectorU8(vec![1, 2]),
-                ScriptArg::VectorU64(vec![1000, 0]),
-                ScriptArg::VectorU128(vec![0]),
-                ScriptArg::VectorAddress(vec![addr("0x1"), addr("0x2")]),
+                MoveValue::Vector(vec![MoveValue::Bool(true), MoveValue::Bool(false)]),
+                MoveValue::Vector(vec![MoveValue::U8(100)]),
+                MoveValue::Vector(vec![]),
+                MoveValue::Vector(vec![MoveValue::U8(1), MoveValue::U8(2)]),
+                MoveValue::Vector(vec![MoveValue::U64(1000), MoveValue::U64(0)]),
+                MoveValue::Vector(vec![MoveValue::U128(0)]),
+                MoveValue::Vector(vec![MoveValue::Address(addr("0x1")), MoveValue::Address(addr("0x2"))]),
             ]
         );
     }

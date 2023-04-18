@@ -13,7 +13,7 @@
 //     TransactionInfo, TransactionOnChainData, TransactionPayload, UserTransactionRequest,
 //     VersionedEvent, WriteSet, WriteSetChange, WriteSetPayload,
 // };
-use anyhow::{bail, ensure, format_err, Context as AnyhowContext, Result};
+use anyhow::{bail, ensure, format_err,  Result};
 // use aptos_crypto::{hash::CryptoHash, HashValue};
 // use aptos_types::{
 //     access_path::{AccessPath, Path},
@@ -27,23 +27,23 @@ use anyhow::{bail, ensure, format_err, Context as AnyhowContext, Result};
 //     write_set::WriteOp,
 // };
 // use aptos_vm::move_vm_ext::MoveResolverExt;
-use move_binary_format::file_format::FunctionHandleIndex;
+// use move_binary_format::file_format::FunctionHandleIndex;
 use move_core_types::{
 account_address::AccountAddress,
 resolver::{ModuleResolver, ResourceResolver},
-    identifier::Identifier,
-    language_storage::{ModuleId, StructTag, TypeTag},
-    value::{MoveStructLayout, MoveTypeLayout,MoveFieldLayout},
+    // identifier::Identifier,
+    language_storage::{ModuleId, StructTag},
+    value::{MoveStructLayout, MoveTypeLayout},
 };
-use crate::move_types::{HexEncodedBytes,MoveValue,MoveStructTag,MoveResource};
+use crate::move_types::{HexEncodedBytes,MoveStructTag,MoveResource};
 use core::str::FromStr;
-use move_resource_viewer::MoveValueAnnotator;
+// use move_resource_viewer::MoveValueAnnotator;
 use serde_json::Value;
 use std::{
     convert::{TryFrom, TryInto},
     iter::IntoIterator,
-    rc::Rc,
-    sync::Arc,
+    // rc::Rc,
+    // sync::Arc,
 };
 
 pub fn parse_struct_tag_string3(
@@ -81,14 +81,14 @@ impl StateView {
 impl ModuleResolver for StateView {
     type Error = anyhow::Error;
 
-    fn get_module(&self, module_id: &ModuleId) -> anyhow::Result<Option<Vec<u8>>> {
+    fn get_module(&self, _module_id: &ModuleId) -> anyhow::Result<Option<Vec<u8>>> {
         Ok(Some(self.module_bytes.clone()))
     }
 }
 impl ResourceResolver for StateView {
     type Error = anyhow::Error;
 
-    fn get_resource(&self, address: &AccountAddress, tag: &StructTag) -> Result<Option<Vec<u8>>> {
+    fn get_resource(&self, _address: &AccountAddress, _tag: &StructTag) -> Result<Option<Vec<u8>>> {
         Ok(Some(self.bytes.clone()))
     }
 }

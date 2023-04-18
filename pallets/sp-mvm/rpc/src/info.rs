@@ -1,16 +1,15 @@
 // use sp_std::prelude::*;
-use anyhow::Error;
-use move_binary_format::access::{ModuleAccess, ScriptAccess};
+// use anyhow::Error;
+use move_binary_format::access::{ModuleAccess};
 use move_binary_format::CompiledModule;
 use move_binary_format::file_format::{
-    Ability, AbilitySet, SignatureToken, StructHandleIndex, Visibility,
+    Ability, AbilitySet, SignatureToken, Visibility,
 };
 use move_core_types::account_address::AccountAddress;
 // use crate::bytecode::accessor::{Bytecode, BytecodeRef};
-use move_core_types::identifier::{IdentStr, Identifier};
+// use move_core_types::identifier::{IdentStr, Identifier};
 use move_core_types::value::{MoveTypeLayout};
 use crate::constant::sig_to_ty;
-
 //    use sp_std::{vec::Vec, prelude::*, default::Default};
 //  use scale_info::prelude::string::String;
 // use sp_std::boxed::Box;
@@ -112,28 +111,28 @@ impl Script {
     }
 }
 
-// #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
-// pub enum Type {
-//     Bool,
-//     U8,
-//     U64,
-//     U128,
-//     Address,
-//     Signer,
-//     Vector(Box<Type>),
-//     Struct(StructDef),
-//     Reference(Box<Type>),
-//     MutableReference(Box<Type>),
-//     TypeParameter(u16),
-// }
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
+pub enum Type {
+    Bool,
+    U8,
+    U64,
+    U128,
+    Address,
+    Signer,
+    Vector(Box<Type>),
+    Struct(StructDef),
+    Reference(Box<Type>),
+    MutableReference(Box<Type>),
+    TypeParameter(u16),
+}
 
-// #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
-// pub struct StructDef {
-//     pub address: AccountAddress,
-//     pub module_name: String,
-//     pub name: String,
-//     pub type_parameters: Vec<Type>,
-// }
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
+pub struct StructDef {
+    pub address: AccountAddress,
+    pub module_name: String,
+    pub name: String,
+    pub type_parameters: Vec<Type>,
+}
 
 fn make_type(tok: &SignatureToken) -> MoveTypeLayout {
     // match tok {

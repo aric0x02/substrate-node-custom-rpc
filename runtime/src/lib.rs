@@ -48,13 +48,13 @@ use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
-use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
+use orml_traits::{parameter_type_with_key};
 
 /// Import the template pallet.
 pub use sp_mvm::gas::{GasWeightMapping};
 pub use sp_mvm_rpc_runtime::types::MVMApiEstimation;
-use constants::{SS58_PREFIX, currency::*, time::*};
-use primitives::{*, currency::CurrencyId, Index as OtherIndex};
+use constants::{currency::*};
+use primitives::{*, currency::CurrencyId};
 use module_currencies::BasicCurrencyAdapter;
 
 

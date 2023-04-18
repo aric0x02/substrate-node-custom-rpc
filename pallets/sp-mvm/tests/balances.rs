@@ -233,7 +233,7 @@ fn transfer_vested_fails() {
                 result,
                 DispatchError::Module(ModuleError {
                     index: 6,
-                    error: 155,
+                    error: [155, 0, 0, 0],
                     message: Some("Aborted")
                 })
             );
@@ -273,7 +273,7 @@ fn transfer_token_vested_fails() {
                 result,
                 DispatchError::Module(ModuleError {
                     index: 6,
-                    error: 155,
+                    error: [155, 0, 0, 0],
                     message: Some("Aborted")
                 })
             );

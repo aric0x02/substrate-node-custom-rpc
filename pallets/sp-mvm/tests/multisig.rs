@@ -23,7 +23,7 @@ fn execute_groupsign() {
 
         // Generate transaction call.
         let bytecode = transactions::MULTISIG_TEST.bytes().to_vec();
-        let call = Call::Mvm(MvmCall::execute {
+        let call = RuntimeCall::Mvm(MvmCall::execute {
             tx_bc: bytecode,
             gas_limit: 1_000_000,
         });
@@ -59,7 +59,7 @@ fn execute_groupsign() {
         ];
 
         assert_ok!(Groupsign::groupsign_call(
-            Origin::signed(alice_key),
+            RuntimeOrigin::signed(alice_key),
             Box::new(call.clone()),
             signers,
             signatures,
