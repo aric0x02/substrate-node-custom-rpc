@@ -628,7 +628,7 @@ println!("try_into_vm_values=in==550=");
             args.len(),
             args,
         );
-println!("try_into_vm_values=in==559=");
+println!("try_into_vm_values=in==559={:?}",&args);
         arg_types
             .into_iter()
             .zip(args.into_iter().map(|x|serde_json::from_str::<serde_json::Value>(x).unwrap()))

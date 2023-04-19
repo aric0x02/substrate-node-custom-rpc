@@ -4579,6 +4579,7 @@ dependencies = [
  "move-core-types",
  "move-vm-types",
  "sha3 0.9.1",
+ "synctools",
  "tracing",
 ]
 
@@ -4732,6 +4733,7 @@ dependencies = [
  "parity-scale-codec-derive 2.3.1",
  "sp-io",
  "stdlib",
+ "synctools",
 ]
 
 [[package]]
@@ -8802,6 +8804,12 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
+
+[[package]]
+name = "synctools"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "39b59f2325f3392f51f3aa95e2c4c40ce00e1a21d9916b4894c5d0671398efaf"
 
 [[package]]
 name = "synstructure"

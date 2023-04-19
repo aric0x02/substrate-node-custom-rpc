@@ -27,7 +27,7 @@ fn publish_module_as_wrong_user() {
             utils::publish_module(origin, &modules::root::EVENT_PROXY, None),
             DispatchError::Module(ModuleError {
                 index: 6,
-                error: [89, 0, 0, 0],
+                error: [90, 0, 0, 0],
                 message: Some("ModuleAddressDoesNotMatchSender")
             })
         );

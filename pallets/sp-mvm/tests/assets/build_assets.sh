@@ -19,7 +19,7 @@ popd
 
 pushd ./user
 dove clean
-dove build
+dove deploy
 dove call "store_u64(42)"
 dove call "emit_event(42)"
 dove call "store_system_block()"
@@ -51,5 +51,5 @@ popd
 
 pushd ./root
 dove clean
-dove build
+dove deploy
 pushd

@@ -528,7 +528,7 @@ use move_core_types::value::{MoveTypeLayout, MoveValue};
         );
 
         let (signers, args) =
-            prepare_function_signature(&[MoveTypeLayout::Address], &[s("0x1")])
+            prepare_function_signature(&[MoveTypeLayout::Address], &[s("\"0x1\"")])
                 .unwrap();
         assert_eq!(signers.len(), 0);
         assert_eq!(args, vec![MoveValue::Address(CORE_CODE_ADDRESS)]);
@@ -545,12 +545,12 @@ use move_core_types::value::{MoveTypeLayout, MoveValue};
             ],
             &[
                 s("[true, false]"),
-                s("[100]"),
-                s("[]"),
-                s("0102"),
+                s("\"0x1000\""),
+                s("\"\""),
+                s("\"0x0102\""),
                 s("[1000, 0]"),
                 s("[0]"),
-                s("[0x1, 0x2]"),
+                s("[\"0x1\",\"0x2\"]"),
             ],
         )
         .unwrap();
@@ -559,7 +559,7 @@ use move_core_types::value::{MoveTypeLayout, MoveValue};
             args,
             vec![
                 MoveValue::Vector(vec![MoveValue::Bool(true), MoveValue::Bool(false)]),
-                MoveValue::Vector(vec![MoveValue::U8(100)]),
+                MoveValue::Vector(vec![MoveValue::U8(16),MoveValue::U8(0)]),
                 MoveValue::Vector(vec![]),
                 MoveValue::Vector(vec![MoveValue::U8(1), MoveValue::U8(2)]),
                 MoveValue::Vector(vec![MoveValue::U64(1000), MoveValue::U64(0)]),

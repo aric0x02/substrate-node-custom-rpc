@@ -1246,7 +1246,7 @@ mod tests {
 
         assert_serialize(
             Struct(create_nested_struct()),
-            json!("0x1::Home::ABC<address, 0x1::account::Base<u128, vector<u64>, vector<0x1::type::String>, 0x1::type::String>>"),
+            json!("0000000000000000000000000000000000000000000000000000000000000001::Home::ABC<address, 0000000000000000000000000000000000000000000000000000000000000001::account::Base<u128, vector<u64>, vector<0000000000000000000000000000000000000000000000000000000000000001::type::String>, 0000000000000000000000000000000000000000000000000000000000000001::type::String>>"),
         );
     }
 
@@ -1293,17 +1293,17 @@ mod tests {
         assert_json(
             value,
             json!({
-                "type": "0x1::type::Values",
+                "type": "0000000000000000000000000000000000000000000000000000000000000001::type::Values",
                 "data": {
                     "field_u8": 7,
-                    "field_u64": "7",
-                    "field_u128": "7",
+                    "field_u64": 7,
+                    "field_u128": 7,
                     "field_bool": true,
-                    "field_address": "0xdd",
-                    "field_vector": ["128"],
+                    "field_address": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0xdd],
+                    "field_vector": [128],
                     "field_bytes": "0x0909",
                     "field_struct": {
-                        "nested_vector": [{"address1": "0x0", "address2": "0x123"}]
+                        "nested_vector": [{"address1": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], "address2": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,35]}]
                     },
                 }
             }),
@@ -1324,9 +1324,9 @@ mod tests {
         assert_json(
             value,
             json!({
-                "type": "0x1::type::Values",
+                "type": "0000000000000000000000000000000000000000000000000000000000000001::type::Values",
                 "data": {
-                    "address_0x0": "0x0",
+                    "address_0x0": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                 }
             }),
         );

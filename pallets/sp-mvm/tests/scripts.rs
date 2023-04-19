@@ -103,7 +103,7 @@ fn execute_script_as_root() {
             result,
             DispatchError::Module(ModuleError {
                 index: 6,
-                error: [7, 0, 0, 0],
+                error: [8, 0, 0, 0],
                 message: Some("TransactionIsNotAllowedError")
             })
         );
