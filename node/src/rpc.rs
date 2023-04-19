@@ -17,7 +17,6 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 pub use sc_rpc_api::DenyUnsafe;
 use sp_mvm_rpc_runtime::MVMApiRuntime;
 
-
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
 	/// The client instance to use.
@@ -36,15 +35,15 @@ where
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
-    C::Api: MVMApiRuntime<Block, AccountId>,
+	C::Api: MVMApiRuntime<Block, AccountId>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BlockBuilder<Block>,
 	P: TransactionPool + 'static,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
+	use sp_mvm_rpc::{MVMApi, MVMApiRpcServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
-    use sp_mvm_rpc::{MVMApi, MVMApiRpcServer};
 	let mut module = RpcModule::new(());
 	let FullDeps { client, pool, deny_unsafe } = deps;
 
@@ -56,6 +55,6 @@ where
 	// to call into the runtime.
 	// `module.merge(YourRpcTrait::into_rpc(YourRpcStruct::new(ReferenceToClient, ...)))?;`
 
-    	module.merge(MVMApi::new(client).into_rpc())?;
+	module.merge(MVMApi::new(client).into_rpc())?;
 	Ok(module)
 }

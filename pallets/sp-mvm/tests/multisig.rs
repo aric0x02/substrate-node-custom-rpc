@@ -1,70 +1,67 @@
 /// Tests related to groupsign calls.
 mod common;
 
-use common::mock::*;
-use common::addr::{alice_public_key, bob_public_key};
-use common::assets::transactions;
+use common::{
+	addr::{alice_public_key, bob_public_key},
+	assets::transactions,
+	mock::*,
+};
 
-use sp_mvm::Call as MvmCall;
-use frame_support::{assert_ok};
-use sp_runtime::codec::Encode;
+use frame_support::assert_ok;
 use sp_core::Pair;
+use sp_mvm::Call as MvmCall;
+use sp_runtime::codec::Encode;
 use sp_std::vec;
 
 #[test]
 /// Execute script as groupsign origin (contains different signers).
 /// Should keep the same sorting for origins.
 fn execute_groupsign() {
-    RuntimeBuilder::new().build().execute_with(|| {
-        let alice_key = alice_public_key();
-        let bob_key = bob_public_key();
+	RuntimeBuilder::new().build().execute_with(|| {
+		let alice_key = alice_public_key();
+		let bob_key = bob_public_key();
 
-        roll_next_block();
+		roll_next_block();
 
-        // Generate transaction call.
-        let bytecode = transactions::MULTISIG_TEST.bytes().to_vec();
-        let call = RuntimeCall::Mvm(MvmCall::execute {
-            tx_bc: bytecode,
-            gas_limit: 1_000_000,
-        });
+		// Generate transaction call.
+		let bytecode = transactions::MULTISIG_TEST.bytes().to_vec();
+		let call = RuntimeCall::Mvm(MvmCall::execute { tx_bc: bytecode, gas_limit: 1_000_000 });
 
-        let since: u64 = 0;
-        let till: u64 = 100;
-        let nonce: u64 = 0;
+		let since: u64 = 0;
+		let till: u64 = 100;
+		let nonce: u64 = 0;
 
-        // Generate info to sign.
+		// Generate info to sign.
 
-        // Call groupsign.
-        let signers = vec![alice_key, bob_key];
+		// Call groupsign.
+		let signers = vec![alice_key, bob_key];
 
-        let mut call_preimage = call.encode();
-        call_preimage.extend(since.encode());
-        call_preimage.extend(till.encode());
-        call_preimage.extend(alice_key.encode());
-        call_preimage.extend(nonce.encode());
-        call_preimage.extend(signers.encode());
+		let mut call_preimage = call.encode();
+		call_preimage.extend(since.encode());
+		call_preimage.extend(till.encode());
+		call_preimage.extend(alice_key.encode());
+		call_preimage.extend(nonce.encode());
+		call_preimage.extend(signers.encode());
 
-        let to_sign = sp_core::blake2_256(&call_preimage);
+		let to_sign = sp_core::blake2_256(&call_preimage);
 
-        // Generate keypairs.
-        let alice_keypair = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
-        let alice_signature = alice_keypair.sign(&to_sign[..]);
+		// Generate keypairs.
+		let alice_keypair = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
+		let alice_signature = alice_keypair.sign(&to_sign[..]);
 
-        let bob_keypair = sp_core::sr25519::Pair::from_string("//Bob", None).unwrap();
-        let bob_signature = bob_keypair.sign(&to_sign[..]);
+		let bob_keypair = sp_core::sr25519::Pair::from_string("//Bob", None).unwrap();
+		let bob_signature = bob_keypair.sign(&to_sign[..]);
 
-        let signatures = vec![
-            AnySignature::from(alice_signature),
-            AnySignature::from(bob_signature.clone()),
-        ];
+		let signatures =
+			vec![AnySignature::from(alice_signature), AnySignature::from(bob_signature.clone())];
 
-        assert_ok!(Groupsign::groupsign_call(
-            RuntimeOrigin::signed(alice_key),
-            Box::new(call.clone()),
-            signers,
-            signatures,
-            since,
-            till,
-        ));
-    });
+		assert_ok!(Groupsign::groupsign_call(
+			RuntimeOrigin::signed(alice_key),
+			Box::new(call.clone()),
+			signers,
+			signatures,
+			since,
+			till,
+		));
+	});
 }

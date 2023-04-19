@@ -12,12 +12,8 @@ pub type FunctionArgs = Vec<Vec<u8>>;
 
 /// Build configuration to call initialize functions on standard library.
 pub fn build() -> (ModuleName, FunctionName, FunctionArgs) {
-    // We use standard arguments.
-    let genesis: GenesisConfig = Default::default();
+	// We use standard arguments.
+	let genesis: GenesisConfig = Default::default();
 
-    (
-        MODULE_NAME.to_vec(),
-        FUNC_NAME.to_vec(),
-        genesis.init_func_config.unwrap().args,
-    )
+	(MODULE_NAME.to_vec(), FUNC_NAME.to_vec(), genesis.init_func_config.unwrap().args)
 }

@@ -11,26 +11,26 @@
 //! then be unpacked to the real type beneath.
 
 // use crate::VerifyInput;
-use anyhow::{bail};
+use anyhow::bail;
 // use aptos_types::{event::EventKey, state_store::state_key::StateKey};
-use move_core_types::identifier::{IdentStr,Identifier};
+use move_core_types::identifier::{IdentStr, Identifier};
 // use poem_openapi::Object;
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 
 use core::{convert::From, fmt, ops::Deref, str::FromStr};
 //  use core::str::FromStr;
-//    
+//
 //  use sp_std::str::FromStr;
 
 // use crate::{Address, U64};
 /// For verifying a given struct
 pub trait VerifyInput {
-    fn verify(&self) -> anyhow::Result<()>;
+	fn verify(&self) -> anyhow::Result<()>;
 }
 
 /// For verifying a given struct that needs to limit recursion
 pub trait VerifyInputWithRecursion {
-    fn verify(&self, recursion_count: u8) -> anyhow::Result<()>;
+	fn verify(&self, recursion_count: u8) -> anyhow::Result<()>;
 }
 
 /// A wrapper of a Move identifier
@@ -38,79 +38,79 @@ pub trait VerifyInputWithRecursion {
 pub struct IdentifierWrapper(pub Identifier);
 
 impl VerifyInput for IdentifierWrapper {
-    fn verify(&self) -> anyhow::Result<()> {
-        if Identifier::is_valid(self.as_str()) {
-            Ok(())
-        } else {
-            bail!("Identifier is invalid {}", self)
-        }
-    }
+	fn verify(&self) -> anyhow::Result<()> {
+		if Identifier::is_valid(self.as_str()) {
+			Ok(())
+		} else {
+			bail!("Identifier is invalid {}", self)
+		}
+	}
 }
 
 impl FromStr for IdentifierWrapper {
-    type Err = anyhow::Error;
+	type Err = anyhow::Error;
 
-    fn from_str(s: &str) -> anyhow::Result<Self, anyhow::Error> {
-        Ok(IdentifierWrapper(Identifier::from_str(s)?))
-    }
+	fn from_str(s: &str) -> anyhow::Result<Self, anyhow::Error> {
+		Ok(IdentifierWrapper(Identifier::from_str(s)?))
+	}
 }
 
 impl From<IdentifierWrapper> for Identifier {
-    fn from(value: IdentifierWrapper) -> Identifier {
-        value.0
-    }
+	fn from(value: IdentifierWrapper) -> Identifier {
+		value.0
+	}
 }
 
 impl From<Identifier> for IdentifierWrapper {
-    fn from(value: Identifier) -> IdentifierWrapper {
-        Self(value)
-    }
+	fn from(value: Identifier) -> IdentifierWrapper {
+		Self(value)
+	}
 }
 
 impl From<&Identifier> for IdentifierWrapper {
-    fn from(value: &Identifier) -> IdentifierWrapper {
-        Self(value.clone())
-    }
+	fn from(value: &Identifier) -> IdentifierWrapper {
+		Self(value.clone())
+	}
 }
 
 impl From<&IdentStr> for IdentifierWrapper {
-    fn from(ident_str: &IdentStr) -> Self {
-        Self(Identifier::from(ident_str))
-    }
+	fn from(ident_str: &IdentStr) -> Self {
+		Self(Identifier::from(ident_str))
+	}
 }
 
 impl AsRef<IdentStr> for IdentifierWrapper {
-    fn as_ref(&self) -> &IdentStr {
-        self.0.as_ref()
-    }
+	fn as_ref(&self) -> &IdentStr {
+		self.0.as_ref()
+	}
 }
 
 impl Deref for IdentifierWrapper {
-    type Target = IdentStr;
+	type Target = IdentStr;
 
-    fn deref(&self) -> &IdentStr {
-        self.0.deref()
-    }
+	fn deref(&self) -> &IdentStr {
+		self.0.deref()
+	}
 }
 
 impl fmt::Display for IdentifierWrapper {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        Identifier::fmt(&self.0, f)
-    }
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		Identifier::fmt(&self.0, f)
+	}
 }
 impl Serialize for IdentifierWrapper {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.to_string().serialize(serializer)
-    }
+	fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+		self.to_string().serialize(serializer)
+	}
 }
 impl<'de> Deserialize<'de> for IdentifierWrapper {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let identifier = <String>::deserialize(deserializer)?;
-        identifier.parse().map_err(D::Error::custom)
-    }
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		let identifier = <String>::deserialize(deserializer)?;
+		identifier.parse().map_err(D::Error::custom)
+	}
 }
 // // Unlike IdentifierWrapper, we don't use this struct as a path / query param.
 // // Instead, we define this wrapper struct for two reasons:

@@ -1,8 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+use sp_runtime::traits::{BlakeTwo256, IdentifyAccount, Verify};
 /// Primitives types for Pontem runtime.
 /// Contains runtime primitvies and types to resolve currrencies.
 use sp_runtime::{generic, MultiSignature, OpaqueExtrinsic as UncheckedExtrinsic};
-use sp_runtime::traits::{Verify, IdentifyAccount, BlakeTwo256};
 
 pub mod currency;
 

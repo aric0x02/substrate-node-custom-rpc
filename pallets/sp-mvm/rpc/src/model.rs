@@ -1,12 +1,10 @@
-use move_core_types::identifier::Identifier;
-use move_core_types::language_storage::TypeTag;
-use anyhow::{Error};
-use move_core_types::value::MoveValue;
+use anyhow::Error;
+use move_core_types::{identifier::Identifier, language_storage::TypeTag, value::MoveValue};
 // use core::str::FromStr;
 use move_core_types::account_address::AccountAddress;
 // use move_core_types::transaction_argument::TransactionArgument;
 // use serde::{Deserialize, Serialize};
-    use move_vm::types::{Transaction,Call,Signer,TxV1};
+use move_vm::types::{Call, Signer, Transaction, TxV1};
 // use sp_std::vec::Vec;
 // use scale_info::prelude::string::String;
 // use  bcs_alt as bcs;
@@ -52,74 +50,72 @@ use move_core_types::account_address::AccountAddress;
 // }
 
 // impl Transaction {
-    /// Create a new function transaction.
-    pub fn new_func_tx(
-        signers: Vec<Signer>,
-        mod_address: AccountAddress,
-        mod_name: Identifier,
-        func_name: Identifier,
-        args: Vec<MoveValue>,
-        type_args: Vec<TypeTag>,
-    ) -> Result<Vec<u8>, Error> {
-        Ok(Transaction::V1(TxV1 {
-            signers,
-            call: Call::ScriptFunction {
-                mod_address,
-                func_name,
-                mod_name,
-            },
-            args: Transaction::args_to_vec(args).unwrap(),
-            type_args,
-        }).to_vec().unwrap())
-    }
+/// Create a new function transaction.
+pub fn new_func_tx(
+	signers: Vec<Signer>,
+	mod_address: AccountAddress,
+	mod_name: Identifier,
+	func_name: Identifier,
+	args: Vec<MoveValue>,
+	type_args: Vec<TypeTag>,
+) -> Result<Vec<u8>, Error> {
+	Ok(Transaction::V1(TxV1 {
+		signers,
+		call: Call::ScriptFunction { mod_address, func_name, mod_name },
+		args: Transaction::args_to_vec(args).unwrap(),
+		type_args,
+	})
+	.to_vec()
+	.unwrap())
+}
 
-    // fn make_args(args: Vec<MoveValue>) -> Result<Vec<MoveValue>, Error> {
-    //     // args.into_iter()
-    //     //     .map(ScriptArg::into)c
-    //     //     .map(|val: MoveValue| bcs::to_bytes(&val))
-    //     //     .collect::<Result<_, _>>()
-    //     //     .map_err(Error::msg)
-    //     Ok(args)
-    // }
+// fn make_args(args: Vec<MoveValue>) -> Result<Vec<MoveValue>, Error> {
+//     // args.into_iter()
+//     //     .map(ScriptArg::into)c
+//     //     .map(|val: MoveValue| bcs::to_bytes(&val))
+//     //     .collect::<Result<_, _>>()
+//     //     .map_err(Error::msg)
+//     Ok(args)
+// }
 
-    // /// Returns last version.
-    // pub fn inner_mut(&mut self) -> &mut V1 {
-    //     match self {
-    //         Transaction::V1(v) => v,
-    //     }
-    // }
+// /// Returns last version.
+// pub fn inner_mut(&mut self) -> &mut V1 {
+//     match self {
+//         Transaction::V1(v) => v,
+//     }
+// }
 
-    // /// Returns last version.
-    // pub fn inner(self) -> V1 {
-    //     match self {
-    //         Transaction::V1(v) => v,
-    //     }
-    // }
+// /// Returns last version.
+// pub fn inner(self) -> V1 {
+//     match self {
+//         Transaction::V1(v) => v,
+//     }
+// }
 // }
 
 /// Script argument type.
 #[derive(Debug, PartialEq, Eq)]
 pub enum ScriptArg {
-    /// u8
-    U8(u8),
-    /// u64
-    U64(u64),
-    /// u128
-    U128(u128),
-    /// bool
-    Bool(bool),
-    /// address
-    Address(AccountAddress),
-    /// vector<u8>
-    VectorU8(Vec<u8>),
-    /// vector<u64>
-    VectorU64(Vec<u64>),
-    /// vector<u128>
-    VectorU128(Vec<u128>),
-    /// vector<bool>
-    VectorBool(Vec<bool>),
-    /// vector<address>
-    VectorAddress(Vec<AccountAddress>),
+	/// u8
+	U8(u8),
+	/// u64
+	U64(u64),
+	/// u128
+	U128(u128),
+	/// bool
+	Bool(bool),
+	/// address
+	Address(AccountAddress),
+	/// vector<u8>
+	VectorU8(Vec<u8>),
+	/// vector<u64>
+	VectorU64(Vec<u64>),
+	/// vector<u128>
+	VectorU128(Vec<u128>),
+	/// vector<bool>
+	VectorBool(Vec<bool>),
+	/// vector<address>
+	VectorAddress(Vec<AccountAddress>),
 }
 
 // impl From<ScriptArg> for MoveValue {
@@ -180,28 +176,27 @@ pub enum ScriptArg {
 // impl FromStr for Signer {
 //     type Err = Error;
 
-   pub  fn from_str(s: &str) -> Option<Signer>{
-        Some(match s.to_lowercase().as_str() {
-            "root" | "rt" | "dr" => Signer::Root,
-            "_" => Signer::Placeholder,
-            _ => Signer::Name(String::from(s)),
-        })
-    }
+pub fn from_str(s: &str) -> Option<Signer> {
+	Some(match s.to_lowercase().as_str() {
+		"root" | "rt" | "dr" => Signer::Root,
+		"_" => Signer::Placeholder,
+		_ => Signer::Name(String::from(s)),
+	})
+}
 // }
 
 #[derive(Debug, PartialEq)]
 pub enum Signers {
-    Explicit(Vec<AccountAddress>),
-    Implicit(Vec<Signer>),
+	Explicit(Vec<AccountAddress>),
+	Implicit(Vec<Signer>),
 }
 
 impl Signers {
-    #[cfg(test)]
-    pub fn len(&self) -> usize {
-        match self {
-            Signers::Explicit(v) => v.len(),
-            Signers::Implicit(v) => v.len(),
-        }
-    }
+	#[cfg(test)]
+	pub fn len(&self) -> usize {
+		match self {
+			Signers::Explicit(v) => v.len(),
+			Signers::Implicit(v) => v.len(),
+		}
+	}
 }
-

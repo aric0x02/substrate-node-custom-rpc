@@ -7,159 +7,162 @@
 
 // How to use:
 // 1. Build node with feature `runtime-benchmarks`
-// 2. Run `./target/release/pontem benchmark --dev -lsp_mvm=trace --pallet=sp_mvm --execution=wasm --wasm-execution=compiled --extrinsic='*' --steps=20 --repeat=10 --output=./target/sp-bench/`
+// 2. Run `./target/release/pontem benchmark --dev -lsp_mvm=trace --pallet=sp_mvm --execution=wasm
+// --wasm-execution=compiled --extrinsic='*' --steps=20 --repeat=10 --output=./target/sp-bench/`
 
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
-use move_core_types::account_address::AccountAddress;
-use move_core_types::identifier::Identifier;
-use move_core_types::language_storage::{CORE_CODE_ADDRESS, ModuleId, StructTag};
+use groupsign;
+use move_core_types::{
+	account_address::AccountAddress,
+	identifier::Identifier,
+	language_storage::{ModuleId, StructTag, CORE_CODE_ADDRESS},
+};
 use move_vm::io::key::AccessKey;
 use sp_std::prelude::*;
-use groupsign;
 
 use crate::benchmarking::store::container;
 
-use super::*;
 #[allow(unused)]
 use super::Pallet as Mvm;
+use super::*;
 
 // Pontem benchmarks.
 // Deploying standard library modules, just modules, runs scripts with different arguments.
 benchmarks! {
 
-    where_clause { where Result<groupsign::Origin<T>, <T as frame_system::Config>::Origin>: From<<T as frame_system::Config>::Origin> }
+	where_clause { where Result<groupsign::Origin<T>, <T as frame_system::Config>::Origin>: From<<T as frame_system::Config>::Origin> }
 
-    publish_empty_module {
-        let caller: T::AccountId = whitelisted_caller();
-        let module = include_bytes!("../tests/benchmark_assets/artifacts/modules/2_Empty.mv").to_vec();
-    }: publish_module(RawOrigin::Signed(caller), module, 100_000_000)
-    verify {
-        assert!(VMStorage::<T>::contains_key(module_access("Empty")));
-    }
-    publish_many_deps_module {
-        for (name, module) in stdlib() {
-            VMStorage::<T>::insert(module_access_core(name), module);
-        }
-        let caller: T::AccountId = whitelisted_caller();
-        let module = include_bytes!("../tests/benchmark_assets/artifacts/modules/53_StdImport.mv").to_vec();
-    }: publish_module(RawOrigin::Signed(caller), module, 100_000_000)
-    verify {
-        assert!(VMStorage::<T>::contains_key(module_access("StdImport")));
-    }
-    publish_s_module {
-        let caller: T::AccountId = whitelisted_caller();
-        let module = include_bytes!("../tests/benchmark_assets/artifacts/modules/6_S.mv").to_vec();
-    }: publish_module(RawOrigin::Signed(caller), module, 100_000_000)
-    verify {
-        assert!(VMStorage::<T>::contains_key(module_access("S")));
-    }
-    publish_m_module {
-        let caller: T::AccountId = whitelisted_caller();
-        let module = include_bytes!("../tests/benchmark_assets/artifacts/modules/5_M.mv").to_vec();
-    }: publish_module(RawOrigin::Signed(caller), module, 100_000_000)
-    verify {
-        assert!(VMStorage::<T>::contains_key(module_access("M")));
-    }
-    publish_l_module {
-        let caller: T::AccountId = whitelisted_caller();
-        let module = include_bytes!("../tests/benchmark_assets/artifacts/modules/4_L.mv").to_vec();
-    }: publish_module(RawOrigin::Signed(caller), module, 100_000_000)
-    verify {
-        assert!(VMStorage::<T>::contains_key(module_access("L")));
-    }
-    execute_many_params {
-        let caller: T::AccountId = whitelisted_caller();
-        let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/many_params.mvt").to_vec();
-    }: execute(RawOrigin::Signed(caller), tx, 500_000)
-    verify {
-        // no-op
-    }
-    execute_store {
-         for (name, module) in stdlib() {
-            VMStorage::<T>::insert(module_access_core(name), module);
-        }
-        VMStorage::<T>::insert(module_access_core("Store"), include_bytes!("../tests/benchmark_assets/artifacts/modules/1_Store.mv").to_vec());
-        let caller: T::AccountId = whitelisted_caller();
-        let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/store.mvt").to_vec();
-    }: execute(RawOrigin::Signed(caller), tx, 500_000)
-    verify {
+	publish_empty_module {
+		let caller: T::AccountId = whitelisted_caller();
+		let module = include_bytes!("../tests/benchmark_assets/artifacts/modules/2_Empty.mv").to_vec();
+	}: publish_module(RawOrigin::Signed(caller), module, 100_000_000)
+	verify {
+		assert!(VMStorage::<T>::contains_key(module_access("Empty")));
+	}
+	publish_many_deps_module {
+		for (name, module) in stdlib() {
+			VMStorage::<T>::insert(module_access_core(name), module);
+		}
+		let caller: T::AccountId = whitelisted_caller();
+		let module = include_bytes!("../tests/benchmark_assets/artifacts/modules/53_StdImport.mv").to_vec();
+	}: publish_module(RawOrigin::Signed(caller), module, 100_000_000)
+	verify {
+		assert!(VMStorage::<T>::contains_key(module_access("StdImport")));
+	}
+	publish_s_module {
+		let caller: T::AccountId = whitelisted_caller();
+		let module = include_bytes!("../tests/benchmark_assets/artifacts/modules/6_S.mv").to_vec();
+	}: publish_module(RawOrigin::Signed(caller), module, 100_000_000)
+	verify {
+		assert!(VMStorage::<T>::contains_key(module_access("S")));
+	}
+	publish_m_module {
+		let caller: T::AccountId = whitelisted_caller();
+		let module = include_bytes!("../tests/benchmark_assets/artifacts/modules/5_M.mv").to_vec();
+	}: publish_module(RawOrigin::Signed(caller), module, 100_000_000)
+	verify {
+		assert!(VMStorage::<T>::contains_key(module_access("M")));
+	}
+	publish_l_module {
+		let caller: T::AccountId = whitelisted_caller();
+		let module = include_bytes!("../tests/benchmark_assets/artifacts/modules/4_L.mv").to_vec();
+	}: publish_module(RawOrigin::Signed(caller), module, 100_000_000)
+	verify {
+		assert!(VMStorage::<T>::contains_key(module_access("L")));
+	}
+	execute_many_params {
+		let caller: T::AccountId = whitelisted_caller();
+		let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/many_params.mvt").to_vec();
+	}: execute(RawOrigin::Signed(caller), tx, 500_000)
+	verify {
+		// no-op
+	}
+	execute_store {
+		 for (name, module) in stdlib() {
+			VMStorage::<T>::insert(module_access_core(name), module);
+		}
+		VMStorage::<T>::insert(module_access_core("Store"), include_bytes!("../tests/benchmark_assets/artifacts/modules/1_Store.mv").to_vec());
+		let caller: T::AccountId = whitelisted_caller();
+		let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/store.mvt").to_vec();
+	}: execute(RawOrigin::Signed(caller), tx, 500_000)
+	verify {
 
-        let tag = StructTag {
-            address: CORE_CODE_ADDRESS,
-            module: Identifier::new("Store").unwrap(),
-            name: Identifier::new("Container").unwrap(),
-            type_params: vec![]
-         };
+		let tag = StructTag {
+			address: CORE_CODE_ADDRESS,
+			module: Identifier::new("Store").unwrap(),
+			name: Identifier::new("Container").unwrap(),
+			type_params: vec![]
+		 };
 
-        let ak = AccessKey::from((&AccountAddress::from_hex_literal("0xd861ea1ebf4800d4b89f4ff787ad79ee96d9a708c85b57da7eb8f9ddeda61291").unwrap(), &tag));
+		let ak = AccessKey::from((&AccountAddress::from_hex_literal("0xd861ea1ebf4800d4b89f4ff787ad79ee96d9a708c85b57da7eb8f9ddeda61291").unwrap(), &tag));
 
-        assert!(VMStorage::<T>::contains_key(ak.as_ref()));
-    }
-    execute_load {
-         for (name, module) in stdlib() {
-            VMStorage::<T>::insert(module_access_core(name), module);
-        }
+		assert!(VMStorage::<T>::contains_key(ak.as_ref()));
+	}
+	execute_load {
+		 for (name, module) in stdlib() {
+			VMStorage::<T>::insert(module_access_core(name), module);
+		}
 
-        let tag = StructTag {
-            address: CORE_CODE_ADDRESS,
-            module: Identifier::new("Store").unwrap(),
-            name: Identifier::new("Container").unwrap(),
-            type_params: vec![]
-         };
+		let tag = StructTag {
+			address: CORE_CODE_ADDRESS,
+			module: Identifier::new("Store").unwrap(),
+			name: Identifier::new("Container").unwrap(),
+			type_params: vec![]
+		 };
 
-        let ak = AccessKey::from((&CORE_CODE_ADDRESS, &tag));
+		let ak = AccessKey::from((&CORE_CODE_ADDRESS, &tag));
 
-        VMStorage::<T>::insert(ak.as_ref().to_vec(), bcs::to_bytes(&container()).unwrap());
+		VMStorage::<T>::insert(ak.as_ref().to_vec(), bcs::to_bytes(&container()).unwrap());
 
-        VMStorage::<T>::insert(module_access_core("Store"), include_bytes!("../tests/benchmark_assets/artifacts/modules/1_Store.mv").to_vec());
-        let caller: T::AccountId = whitelisted_caller();
-        let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/load.mvt").to_vec();
-    }: execute(RawOrigin::Signed(caller), tx, 500_000)
-    verify {
-    }
-    execute_store_event {
-         for (name, module) in stdlib() {
-            VMStorage::<T>::insert(module_access_core(name), module);
-        }
-        let caller: T::AccountId = whitelisted_caller();
-        let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/store_events.mvt").to_vec();
-    }: execute(RawOrigin::Signed(caller), tx, 500_000)
-    verify {
-    }
-    execute_vec_input {
-        let caller: T::AccountId = whitelisted_caller();
-        let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/vector_input.mvt").to_vec();
-    }: execute(RawOrigin::Signed(caller), tx, 500_000)
-    verify {
-    }
-    execute_loop {
-        let caller: T::AccountId = whitelisted_caller();
-        let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/lp.mvt").to_vec();
-    }: execute(RawOrigin::Signed(caller), tx, 100_000_000)
-    verify {
-    }
+		VMStorage::<T>::insert(module_access_core("Store"), include_bytes!("../tests/benchmark_assets/artifacts/modules/1_Store.mv").to_vec());
+		let caller: T::AccountId = whitelisted_caller();
+		let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/load.mvt").to_vec();
+	}: execute(RawOrigin::Signed(caller), tx, 500_000)
+	verify {
+	}
+	execute_store_event {
+		 for (name, module) in stdlib() {
+			VMStorage::<T>::insert(module_access_core(name), module);
+		}
+		let caller: T::AccountId = whitelisted_caller();
+		let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/store_events.mvt").to_vec();
+	}: execute(RawOrigin::Signed(caller), tx, 500_000)
+	verify {
+	}
+	execute_vec_input {
+		let caller: T::AccountId = whitelisted_caller();
+		let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/vector_input.mvt").to_vec();
+	}: execute(RawOrigin::Signed(caller), tx, 500_000)
+	verify {
+	}
+	execute_loop {
+		let caller: T::AccountId = whitelisted_caller();
+		let tx = include_bytes!("../tests/benchmark_assets/artifacts/transactions/lp.mvt").to_vec();
+	}: execute(RawOrigin::Signed(caller), tx, 100_000_000)
+	verify {
+	}
 }
 
 impl_benchmark_test_suite!(Mvm, crate::mock::new_test_ext(), crate::mock::Test,);
 
 pub fn module_access_core(name: &str) -> Vec<u8> {
-    ModuleId::new(CORE_CODE_ADDRESS, Identifier::new(name).unwrap()).access_vector()
+	ModuleId::new(CORE_CODE_ADDRESS, Identifier::new(name).unwrap()).access_vector()
 }
 
 pub fn module_access(name: &str) -> Vec<u8> {
-    ModuleId::new(
-        AccountAddress::from_hex_literal(
-            "0xd861ea1ebf4800d4b89f4ff787ad79ee96d9a708c85b57da7eb8f9ddeda61291",
-        )
-        .unwrap(),
-        Identifier::new(name).unwrap(),
-    )
-    .access_vector()
+	ModuleId::new(
+		AccountAddress::from_hex_literal(
+			"0xd861ea1ebf4800d4b89f4ff787ad79ee96d9a708c85b57da7eb8f9ddeda61291",
+		)
+		.unwrap(),
+		Identifier::new(name).unwrap(),
+	)
+	.access_vector()
 }
 
 pub fn stdlib() -> Vec<(&'static str, Vec<u8>)> {
-    vec![
+	vec![
         (
             "Signer",
             include_bytes!("../tests/benchmark_assets/stdlib/artifacts/modules/0_Signer.mv").to_vec()
@@ -352,145 +355,130 @@ pub fn stdlib() -> Vec<(&'static str, Vec<u8>)> {
 }
 
 mod store {
-    use move_core_types::language_storage::CORE_CODE_ADDRESS;
-    use serde::Serialize;
-    use sp_std::prelude::*;
+	use move_core_types::language_storage::CORE_CODE_ADDRESS;
+	use serde::Serialize;
+	use sp_std::prelude::*;
 
-    #[derive(Serialize)]
-    #[serde(crate = "serde_alt")]
-    pub struct Container {
-        inner_1: Inner,
-        inner_2: Inner,
-        inner_3: Inner,
-        inner_4: Inner,
-    }
+	#[derive(Serialize)]
+	#[serde(crate = "serde_alt")]
+	pub struct Container {
+		inner_1: Inner,
+		inner_2: Inner,
+		inner_3: Inner,
+		inner_4: Inner,
+	}
 
-    #[derive(Serialize)]
-    #[serde(crate = "serde_alt")]
-    pub struct Inner {
-        val: bool,
-        val_1: u128,
-        val_2: Vec<u8>,
-        val_3: u64,
-    }
+	#[derive(Serialize)]
+	#[serde(crate = "serde_alt")]
+	pub struct Inner {
+		val: bool,
+		val_1: u128,
+		val_2: Vec<u8>,
+		val_3: u64,
+	}
 
-    pub fn container() -> Container {
-        Container {
-            inner_1: Inner {
-                val: true,
-                val_1: 1000000000,
-                val_2: CORE_CODE_ADDRESS.to_vec(),
-                val_3: 13,
-            },
-            inner_2: Inner {
-                val: false,
-                val_1: 13,
-                val_2: CORE_CODE_ADDRESS.to_vec(),
-                val_3: 0,
-            },
-            inner_3: Inner {
-                val: false,
-                val_1: 42,
-                val_2: CORE_CODE_ADDRESS.to_vec(),
-                val_3: 0,
-            },
-            inner_4: Inner {
-                val: false,
-                val_1: 0,
-                val_2: CORE_CODE_ADDRESS.to_vec(),
-                val_3: 0,
-            },
-        }
-    }
+	pub fn container() -> Container {
+		Container {
+			inner_1: Inner {
+				val: true,
+				val_1: 1000000000,
+				val_2: CORE_CODE_ADDRESS.to_vec(),
+				val_3: 13,
+			},
+			inner_2: Inner { val: false, val_1: 13, val_2: CORE_CODE_ADDRESS.to_vec(), val_3: 0 },
+			inner_3: Inner { val: false, val_1: 42, val_2: CORE_CODE_ADDRESS.to_vec(), val_3: 0 },
+			inner_4: Inner { val: false, val_1: 0, val_2: CORE_CODE_ADDRESS.to_vec(), val_3: 0 },
+		}
+	}
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::tests_composite::{ExtBuilder, Test};
-    use frame_support::assert_ok;
+	use super::*;
+	use crate::tests_composite::{ExtBuilder, Test};
+	use frame_support::assert_ok;
 
-    #[test]
-    fn publish_std() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_publish_std::<Test>());
-        });
-    }
+	#[test]
+	fn publish_std() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_publish_std::<Test>());
+		});
+	}
 
-    #[test]
-    fn publish_empty_module() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_publish_empty_module::<Test>());
-        });
-    }
+	#[test]
+	fn publish_empty_module() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_publish_empty_module::<Test>());
+		});
+	}
 
-    #[test]
-    fn publish_many_deps_module() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_publish_many_deps_module::<Test>());
-        });
-    }
+	#[test]
+	fn publish_many_deps_module() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_publish_many_deps_module::<Test>());
+		});
+	}
 
-    #[test]
-    fn publish_s_module() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_publish_s_module::<Test>());
-        });
-    }
+	#[test]
+	fn publish_s_module() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_publish_s_module::<Test>());
+		});
+	}
 
-    #[test]
-    fn publish_m_module() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_publish_m_module::<Test>());
-        });
-    }
+	#[test]
+	fn publish_m_module() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_publish_m_module::<Test>());
+		});
+	}
 
-    #[test]
-    fn publish_l_module() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_publish_l_module::<Test>());
-        });
-    }
+	#[test]
+	fn publish_l_module() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_publish_l_module::<Test>());
+		});
+	}
 
-    #[test]
-    fn execute_many_params() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_execute_many_params::<Test>());
-        });
-    }
+	#[test]
+	fn execute_many_params() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_execute_many_params::<Test>());
+		});
+	}
 
-    #[test]
-    fn execute_store() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_execute_store::<Test>());
-        });
-    }
+	#[test]
+	fn execute_store() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_execute_store::<Test>());
+		});
+	}
 
-    #[test]
-    fn execute_load() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_execute_load::<Test>());
-        });
-    }
+	#[test]
+	fn execute_load() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_execute_load::<Test>());
+		});
+	}
 
-    #[test]
-    fn execute_store_event() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_execute_store_event::<Test>());
-        });
-    }
+	#[test]
+	fn execute_store_event() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_execute_store_event::<Test>());
+		});
+	}
 
-    #[test]
-    fn execute_vec_input() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_execute_vec_input::<Test>());
-        });
-    }
+	#[test]
+	fn execute_vec_input() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_execute_vec_input::<Test>());
+		});
+	}
 
-    #[test]
-    fn execute_execute_loop() {
-        ExtBuilder::default().build().execute_with(|| {
-            assert_ok!(test_benchmark_eexecute_loop::<Test>());
-        });
-    }
+	#[test]
+	fn execute_execute_loop() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_ok!(test_benchmark_eexecute_loop::<Test>());
+		});
+	}
 }
