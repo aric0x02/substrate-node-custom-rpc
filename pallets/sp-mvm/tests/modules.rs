@@ -1,6 +1,5 @@
 /// Tests related to modules/packages publishing.
-use frame_support::assert_err_ignore_postinfo;
-use frame_support::dispatch::DispatchError;
+use frame_support::{assert_err_ignore_postinfo, dispatch::DispatchError};
 use sp_runtime::ModuleError;
 
 mod common;

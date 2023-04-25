@@ -800,7 +800,7 @@ pub fn new_vm_utf8_string(string: &str) -> move_core_types::value::MoveValue {
 //                 AbortLocation::Module(_) => {
 //                     info.as_ref().map(|i| {
 //                         format!("Move abort in {}: {}({:#x}): {}",
-// abort_location_to_str(location), i.reason_name, code, i.description)                     
+// abort_location_to_str(location), i.reason_name, code, i.description)
 // }).unwrap_or_else(|| {                         format!("Move abort in {}: {:#x}",
 // abort_location_to_str(location), code)                     })
 //                 }

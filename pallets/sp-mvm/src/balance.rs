@@ -12,15 +12,17 @@
 //!     * get_balance - get current balance of account.
 //!     * add - add tokens to account.
 //!     * sub - reduce account balance on amount.
-use core::convert::{TryFrom, TryInto};
-use move_vm::io::traits::{Balance as VmBalance, BalanceAccess};
-
 use crate::addr::address_to_account;
+use core::convert::{TryFrom, TryInto};
 use frame_support::{
 	dispatch::fmt::Debug, pallet_prelude::MaybeSerializeDeserialize, traits::tokens::fungibles,
 	PalletId,
 };
-use move_vm::io::balance::CurrencyInfo;
+use move_vm::io::{
+	balance::CurrencyInfo,
+	traits::{Balance as VmBalance, BalanceAccess},
+};
+
 use orml_traits::MultiCurrency;
 use parity_scale_codec::{Decode, Encode, FullCodec};
 use sp_runtime::traits::AccountIdConversion;

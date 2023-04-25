@@ -5,11 +5,11 @@ use move_binary_format::{
 	file_format::{Ability, AbilitySet, SignatureToken, Visibility},
 	CompiledModule,
 };
-use move_core_types::account_address::AccountAddress;
+use move_core_types::{account_address::AccountAddress, value::MoveTypeLayout};
 // use crate::bytecode::accessor::{Bytecode, BytecodeRef};
 // use move_core_types::identifier::{IdentStr, Identifier};
 use crate::constant::sig_to_ty;
-use move_core_types::value::MoveTypeLayout;
+
 //    use sp_std::{vec::Vec, prelude::*, default::Default};
 //  use scale_info::prelude::string::String;
 // use sp_std::boxed::Box;

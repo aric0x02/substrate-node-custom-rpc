@@ -4718,6 +4718,7 @@ dependencies = [
  "bcs 0.1.3",
  "cell",
  "diem-crypto",
+ "diem-crypto-derive",
  "diem-types",
  "getrandom 0.2.8",
  "hashbrown 0.11.2",
