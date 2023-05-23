@@ -13,7 +13,7 @@
 //     TransactionInfo, TransactionOnChainData, TransactionPayload, UserTransactionRequest,
 //     VersionedEvent, WriteSet, WriteSetChange, WriteSetPayload,
 // };
-use anyhow::{bail, ensure, format_err, Result};
+use anyhow::{anyhow, bail, ensure, format_err, Context, Result};
 // use aptos_crypto::{hash::CryptoHash, HashValue};
 // use aptos_types::{
 //     access_path::{AccessPath, Path},
@@ -28,12 +28,13 @@ use anyhow::{bail, ensure, format_err, Result};
 // };
 // use aptos_vm::move_vm_ext::MoveResolverExt;
 // use move_binary_format::file_format::FunctionHandleIndex;
-use crate::move_types::{HexEncodedBytes, MoveResource, MoveStructTag};
+use crate::move_types::{HexEncodedBytes, MoveResource, MoveStructTag, MoveType, MoveValue};
 use core::str::FromStr;
+use move_binary_format::{layout::GetModule, CompiledModule};
 use move_core_types::{
 	account_address::AccountAddress,
 	// identifier::Identifier,
-	language_storage::{ModuleId, StructTag},
+	language_storage::{ModuleId, StructTag, TypeTag},
 	resolver::{ModuleResolver, ResourceResolver},
 	value::{MoveStructLayout, MoveTypeLayout},
 };
@@ -92,6 +93,22 @@ impl ResourceResolver for StateView {
 		Ok(Some(self.bytes.clone()))
 	}
 }
+
+impl GetModule for &StateView {
+	type Error = anyhow::Error;
+	// type Item = CompiledModule;
+
+	fn get_module_by_id(&self, id: &ModuleId) -> Result<Option<CompiledModule>, Self::Error> {
+		if let Some(bytes) = self.get_module(id)? {
+			let module = CompiledModule::deserialize(&bytes)
+				.map_err(|e| anyhow!("Failure deserializing module {:?}: {:?}", id, e))?;
+			Ok(Some(module))
+		} else {
+			Ok(None)
+		}
+	}
+}
+
 pub fn struct_to_json(st: &StructTag, res: Vec<u8>, module: Vec<u8>) -> Result<MoveResource> {
 	let view = StateView::new(res.clone(), module);
 	// Internally produce FatStructType (with layout) for StructTag by
@@ -104,6 +121,51 @@ pub fn struct_to_json(st: &StructTag, res: Vec<u8>, module: Vec<u8>) -> Result<M
 	})
 }
 
+/// Retrieve table item for a specific ledger version
+pub fn table_item_key(key_type: Vec<u8>, key: Vec<u8>, module_bytes: Vec<u8>) -> Result<Vec<u8>> {
+	// Parse the key and value types for the table
+	let key_type = MoveType::from_str(String::from_utf8(key_type).unwrap().as_str())
+		.map_err(|err| format_err!("Failed to convert value_type from str {:?}", err))?;
+	println!("======129======={:?}", 1);
+	let key_type = key_type
+		.try_into()
+		.context("Failed to parse key_type")
+		.map_err(|err| format_err!("Failed to parse key_type {:?}", err,))?;
+	println!("======134======={:?}", 1);
+
+	// Convert key to lookup version for DB
+	let key: Value =
+		serde_json::from_str::<serde_json::Value>(String::from_utf8(key).unwrap().as_str())
+			.unwrap();
+	println!("======138======={:?}", 1);
+
+	let vm_key = MoveConverter::try_into_vm_value_from_tag(&key_type, key, module_bytes)
+		.map_err(|err| format_err!("Failed to try into vm value {:?}", err,))?;
+	println!("======142======={:?}", vm_key);
+	vm_key
+		.undecorate()
+		.simple_serialize()
+		.ok_or_else(|| format_err!("Failed to serialize table key"))
+}
+
+pub fn table_item_value_bytes(value_type: StructTag, bytes: Vec<u8>, module_bytes: Vec<u8>) -> Result<Option<Vec<u8>>> {
+	// let value_type = MoveType::from_str(String::from_utf8(value_type).unwrap().as_str())
+	// 	.map_err(|err| format_err!("Failed to convert value_type from str {:?}", err))?;
+	// println!("======152======={:?}", 1);
+	// let value_type = value_type
+	// 	.try_into()
+	// 	.context("Failed to parse value_type")
+	// 	.map_err(|err| format_err!("Failed to parse value_type {:?}", err,))?;
+	println!("======157======={:?}", 1);
+
+	let move_value = MoveConverter::try_into_move_value(&TypeTag::Struct(value_type), &bytes,module_bytes)
+		.context("Failed to deserialize table item retrieved from DB")
+		.map_err(|err| {
+			format_err!("Failed to deserialize table item retrieved from DB {:?}", err,)
+		})?;
+	println!("======164======={:?}", 1);
+	Ok(serde_json::to_vec(&move_value).ok())
+}
 // use storage_interface::DbReader;
 
 /// The Move converter for converting Move types to JSON
@@ -649,6 +711,19 @@ impl MoveConverter {
 	// representation in the DB.
 	// Notice that structs are of the `MoveStruct::Runtime` flavor, matching the representation in
 	// DB.
+	pub fn try_into_vm_value_from_tag(
+		type_tag: &TypeTag,
+		val: Value,
+		module_bytes: Vec<u8>,
+	) -> Result<move_core_types::value::MoveValue> {
+		let view = StateView::new(Vec::new(), module_bytes);
+		// Internally produce FatStructType (with layout) for StructTag by
+		// resolving & de-.. entire deps-chain.
+		let annotator = move_resource_viewer::MoveValueAnnotator::new(&view);
+		let layout = annotator.get_type_layout_with_types(type_tag)?;
+		println!("try_into_vm_value_from_tag=in==718=");
+		Self::try_into_vm_value_from_layout(&layout, val)
+	}
 	pub fn try_into_vm_value(
 		layout: &MoveTypeLayout,
 		val: Value,
@@ -662,7 +737,7 @@ impl MoveConverter {
 		layout: &MoveTypeLayout,
 		val: Value,
 	) -> Result<move_core_types::value::MoveValue> {
-		println!("try_into_vm_value_from_layout=in=602==");
+		println!("try_into_vm_value_from_layout=in=734===={:?}===={:?}=", layout, val);
 
 		use move_core_types::value::MoveValue::*;
 		//  use sp_core::U256;
@@ -751,9 +826,14 @@ impl MoveConverter {
 		)))
 	}
 
-	// pub fn try_into_move_value(&self, typ: &TypeTag, bytes: &[u8]) -> Result<MoveValue> {
-	//     self.inner.view_value(typ, bytes)?.try_into()
-	// }
+	pub fn try_into_move_value(typ: &TypeTag, bytes: &[u8],module_bytes: Vec<u8>,) -> Result<MoveValue> {
+		let view = StateView::new(bytes.to_vec(), module_bytes);
+		// Internally produce FatStructType (with layout) for StructTag by
+		// resolving & de-.. entire deps-chain.
+		let annotator = move_resource_viewer::MoveValueAnnotator::new(&view);
+		println!("try_into_move_value=in=834=annotator.view_value(typ, bytes)===={:?}=", annotator.view_value(typ, bytes));
+		annotator.view_value(typ, bytes)?.try_into()
+	}
 }
 
 // impl<'a, R: MoveResolverExt + ?Sized> ExplainVMStatus for MoveConverter<'a, R> {

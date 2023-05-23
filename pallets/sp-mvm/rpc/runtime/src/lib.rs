@@ -34,5 +34,7 @@ sp_api::decl_runtime_apis! {
 		// Get resource
 		fn get_resource(account: AccountId, tag: Vec<u8>) -> Result<Option<Vec<u8>>, Vec<u8>>;
 
+		// Get table entry
+		fn get_table_entry(handle: u128,key: Vec<u8>) -> Result<Option<Vec<u8>>, Vec<u8>> ;
 	}
 }

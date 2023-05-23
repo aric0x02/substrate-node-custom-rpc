@@ -639,6 +639,13 @@ impl_runtime_apis! {
 		) -> Result<Option<Vec<u8>>, Vec<u8>> {
 			Mvm::get_resource(&account_id, &tag.as_slice())
 		}
+		// Get table entry
+		fn get_table_entry(
+			handle: u128,
+			key: Vec<u8>,
+		) -> Result<Option<Vec<u8>>, Vec<u8>> {
+			Mvm::get_table_entry(handle, &key.as_slice())
+		}
 
 	}
 	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentCallApi<Block, Balance, RuntimeCall>

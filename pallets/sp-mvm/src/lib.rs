@@ -185,50 +185,11 @@ pub mod pallet {
 	where
 		OriginFor<T>: Into<Result<groupsign::Origin<T>, OriginFor<T>>>,
 	{
-		/// Execute Move script function.
-		///
-		/// User can send his Move script function for execution by Move VM.
-		/// The gas limit should be provided.
-		#[pallet::call_index(0)]
-		#[pallet::weight(
-            <T as Config>::WeightInfo::execute().saturating_add(
-                T::GasWeightMapping::gas_to_weight(*gas_limit)
-            )
-        )]
-		pub fn execute_script_function(
-			origin: OriginFor<T>,
-			module_address: T::AccountId,
-			module_name: Vec<u8>,
-			ty_args: Vec<u8>,
-			args: Vec<u8>,
-			gas_limit: u64,
-		) -> DispatchResultWithPostInfo {
-			let groupsign_origin = ensure_groupsign(origin.clone());
-			debug!(
-				"executing `publish module` with signed {:?},{:?},{:?},{:?},",
-				module_address, module_name, ty_args, args
-			);
-			let (signers, root) = match groupsign_origin {
-				// TODO: determine sudoer by groupsign signers
-				Ok(groupsign_signers) => (groupsign_signers.signers.into_inner(), false),
-				Err(_) => match T::UpdateOrigin::ensure_origin(origin.clone()) {
-					Ok(_) => (vec![], true),
-					Err(_) => (vec![ensure_signed(origin)?], false),
-				},
-			};
-
-			let vm_result = Self::raw_execute_script(&signers, args, gas_limit, root, false)?;
-
-			// produce result with spended gas:
-			let result = result::from_vm_result::<T>(vm_result)?;
-			Ok(result)
-		}
-
 		/// Execute Move script.
 		///
 		/// User can send his Move script (compiled using 'dove call' command) for execution by Move
 		/// VM. The gas limit should be provided.
-		#[pallet::call_index(1)]
+		#[pallet::call_index(0)]
 		#[pallet::weight(
             <T as Config>::WeightInfo::execute().saturating_add(
                 T::GasWeightMapping::gas_to_weight(*gas_limit)
@@ -261,7 +222,7 @@ pub mod pallet {
 		///
 		/// User can publish his Move module under his address.
 		/// The gas limit should be provided.
-		#[pallet::call_index(2)]
+		#[pallet::call_index(1)]
 		#[pallet::weight(
             <T as Config>::WeightInfo::publish_module().saturating_add(
                 T::GasWeightMapping::gas_to_weight(*gas_limit)
@@ -296,7 +257,7 @@ pub mod pallet {
 		/// The gas limit should be provided.
 		/// TODO: maybe we should replace it with publish_package, yet i'm currently not sure, as
 		/// user anyway paying for transaction bytes.
-		#[pallet::call_index(3)]
+		#[pallet::call_index(2)]
 		#[pallet::weight(
             <T as Config>::WeightInfo::publish_module().saturating_add(
                 T::GasWeightMapping::gas_to_weight(*gas_limit)
@@ -619,6 +580,12 @@ pub mod pallet {
 				.map_err::<Vec<u8>, _>(|e| format!("error while getting vm {:?}", e).into())?;
 			vm.get_resource(&AccountAddress::new(addr::account_to_bytes(account)), tag)
 				.map_err(|e| format!("error in get_resource: {:?}", e).into())
+		}
+		pub fn get_table_entry(handle: u128, key: &[u8]) -> Result<Option<Vec<u8>>, Vec<u8>> {
+			let vm = Self::get_vm()
+				.map_err::<Vec<u8>, _>(|e| format!("error while getting vm {:?}", e).into())?;
+			vm.get_table_entry(handle, key)
+				.map_err(|e| format!("error in get_table_entry: {:?}", e).into())
 		}
 	}
 

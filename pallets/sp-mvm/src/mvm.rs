@@ -66,6 +66,13 @@ mod boxed {
 		) -> Result<Option<sp_std::vec::Vec<u8>>, Error> {
 			self.0.get_resource(address, tag)
 		}
+		fn get_table_entry(
+			&self,
+			handle: u128,
+			key: &[u8],
+		) -> Result<Option<sp_std::vec::Vec<u8>>, Error> {
+			self.0.get_table_entry(handle, key)
+		}
 	}
 
 	impl<T: move_vm::Vm> VmWrapper<T> {

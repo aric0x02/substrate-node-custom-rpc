@@ -192,6 +192,16 @@ pub trait MVMApiRpc<BlockHash, AccountId> {
 		tag: Bytes,
 		at: Option<BlockHash>,
 	) -> Result<Option<Bytes>>;
+
+	#[method(name = "mvm_getTableEntry")]
+	fn get_table_entry(
+		&self,
+		handle: Bytes,
+		key: Bytes,
+		key_type: Bytes,
+		value_type: Bytes,
+		at: Option<BlockHash>,
+	) -> Result<Option<Bytes>>;
 }
 
 pub struct MVMApi<C, P> {
@@ -539,6 +549,43 @@ where
 		let ff = serde_json::to_vec(&f).ok();
 		println!("get_resources3=result==={:?}=={:?}=", f, ff);
 		let f = ff;
+		Ok(f.map(Into::into))
+	}
+
+	fn get_table_entry(
+		&self,
+		handle: Bytes,
+		key: Bytes,
+		key_type: Bytes,
+		value_type: Bytes,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> Result<Option<Bytes>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash));
+		println!("======567======={:?}", 1);
+		let (_tag_bcs, tag, module_id) =
+			convert::parse_struct_tag_string3(value_type.clone().into_vec()).unwrap();
+		println!("======570======={:?}", 1);
+		let module: Option<Vec<u8>> = api
+			.get_module(&at, module_id)
+			.map_err(runtime_error_into_rpc_err4)?
+			.map_err(runtime_error_into_rpc_err5)?;
+		println!("======575======={:?}", 1);
+		let raw_key = convert::table_item_key(key_type.into_vec(), key.into_vec(), module.clone().unwrap())
+			.map_err(runtime_error_into_rpc_err5)?;
+		println!("======578======={:?}", raw_key);
+		let handle = std::str::from_utf8(&handle.into_vec()).unwrap().parse::<u128>().unwrap();
+		println!("=====580========{:?}", handle);
+		let f: Option<Vec<u8>> = api
+			.get_table_entry(&at, handle, raw_key)
+			.map_err(runtime_error_into_rpc_err4)?
+			.map_err(runtime_error_into_rpc_err5)?;
+		println!("======585======={:?}", f);
+		let f: Option<Vec<u8>> =
+			convert::table_item_value_bytes(tag, f.unwrap_or(vec![]),module.unwrap())?;
+		println!("======588======={:?}", f);
 		Ok(f.map(Into::into))
 	}
 }
