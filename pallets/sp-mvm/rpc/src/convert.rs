@@ -116,7 +116,7 @@ pub fn struct_to_json(st: &StructTag, res: Vec<u8>, module: Vec<u8>) -> Result<M
 	let annotator = move_resource_viewer::MoveValueAnnotator::new(&view);
 
 	annotator.view_resource(&st, &res).and_then(|result| {
-		println!("{:?}", result);
+		println!("====struct_to_json =====119========{:?}", result);
 		result.try_into()
 	})
 }

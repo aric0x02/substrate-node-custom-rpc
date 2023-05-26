@@ -223,7 +223,14 @@ impl TryFrom<AnnotatedMoveStruct> for MoveStructValue {
 	fn try_from(s: AnnotatedMoveStruct) -> anyhow::Result<Self> {
 		let mut map = BTreeMap::new();
 		for (id, val) in s.value {
-			map.insert(id.into(), MoveValue::try_from(val)?.json()?);
+            match MoveValue::try_from(val.clone()).expect(&format!("id={:?},val=={:?}",id,val)).json(){
+                Ok(_json)=>{map.insert(id.clone().into(), MoveValue::try_from(val.clone()).expect(&format!("id={:?},val=={:?}",id,val)).json().expect(&format!("json==={:?}==id={:?},val=={:?}",_json,id,val)));
+            }
+            Err(err)=>{
+                    println!("==MoveValue::try_from====={:?}======={:?}=========={:?}",MoveValue::try_from(val.clone()),val,err);   
+            }
+            }
+			
 		}
 		Ok(Self(map))
 	}
@@ -237,7 +244,7 @@ pub enum MoveValue {
 	U16(u16),
 	U32(u32),
 	U64(u64),
-	U128(u128),
+	U128(U128),
 	// U256(U256),
 	/// A bool Move type
 	Bool(bool),
@@ -252,7 +259,7 @@ pub enum MoveValue {
 
 impl MoveValue {
 	pub fn json(&self) -> anyhow::Result<serde_json::Value> {
-		Ok(serde_json::to_value(self).map_err(|_| anyhow::anyhow!("invalid MoveValue json: "))?)
+		Ok(serde_json::to_value(self).map_err(|err| anyhow::anyhow!("invalid MoveValue json:{:?} ",err))?)
 	}
 
 	pub fn is_utf8_string(st: &StructTag) -> bool {
@@ -286,7 +293,7 @@ impl TryFrom<AnnotatedMoveValue> for MoveValue {
 			// AnnotatedMoveValue::U16(v) => MoveValue::U16(v),
 			// AnnotatedMoveValue::U32(v) => MoveValue::U32(v),
 			AnnotatedMoveValue::U64(v) => MoveValue::U64(v),
-			AnnotatedMoveValue::U128(v) => MoveValue::U128(v),
+			AnnotatedMoveValue::U128(v) => MoveValue::U128(crate::move_types::U128(v)),
 			// AnnotatedMoveValue::U256(v) => MoveValue::U256(U256(v)),
 			AnnotatedMoveValue::Bool(v) => MoveValue::Bool(v),
 			AnnotatedMoveValue::Address(v) => MoveValue::Address(v.into()),
@@ -311,7 +318,7 @@ impl From<TransactionArgument> for MoveValue {
 			// TransactionArgument::U16(v) => MoveValue::U16(v),
 			// TransactionArgument::U32(v) => MoveValue::U32(v),
 			TransactionArgument::U64(v) => MoveValue::U64(v),
-			TransactionArgument::U128(v) => MoveValue::U128(v),
+			TransactionArgument::U128(v) => MoveValue::U128(crate::move_types::U128(v)),
 			// TransactionArgument::U256(v) => MoveValue::U256(U256(v)),
 			TransactionArgument::Bool(v) => MoveValue::Bool(v),
 			TransactionArgument::Address(v) => MoveValue::Address(v.into()),
@@ -1271,7 +1278,11 @@ mod tests {
 	fn test_serialize_deserialize_u128() {
 		test_serialize_deserialize(U128::from(u128::MAX), json!(u128::MAX.to_string()))
 	}
-
+	#[test]
+	fn test_serialize_deserialize_u128todo() {
+        // assert_eq!(u128::MAX,132692409849679358887631062327771453437);340282366920938463463374607431768211455
+		test_serialize_deserialize(U128::from(132692409849679358887631062327771453437), json!(132692409849679358887631062327771453437u128.to_string()))
+	}
 	#[test]
 	fn test_serialize_deserialize_move_module_id() {
 		test_serialize_deserialize(

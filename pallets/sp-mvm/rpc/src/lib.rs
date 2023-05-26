@@ -531,15 +531,16 @@ where
 		// use move_resource_viewer::MoveValueAnnotator;
 		let annotator = move_resource_viewer::MoveValueAnnotator::new(&view);
 		use crate::move_types::MoveResource;
-
 		let f: MoveResource = annotator
 			.view_resource(&tag, &f.unwrap())
 			.and_then(|result| {
-				println!("=get_resources2===={:?}", result);
+				println!("=get_resources3==538=={:?}", result);
 				result.try_into()
 			})
 			.map_err(runtime_error_into_rpc_err5)?;
 
+
+	 
 		//  let module: Option<Vec<u8>> = api
 		//         .get_module(&at, module_id)
 		//         .map_err(runtime_error_into_rpc_err4)?
