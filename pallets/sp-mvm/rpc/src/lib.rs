@@ -25,78 +25,73 @@ pub mod info;
 pub mod model;
 pub mod move_types;
 pub mod wrappers;
+pub mod api_state_view;
+use crate::api_state_view::ApiStateView;
 pub use crate::move_types::MoveModuleBytecode;
-// use anyhow::{bail, ensure, format_err, Context as AnyhowContext, Result as AnyHowResult};
-use move_core_types::{
-	account_address::AccountAddress,
-	// identifier::Identifier,
-	language_storage::{ModuleId, StructTag},
-	// value::{MoveStructLayout, MoveTypeLayout,MoveFieldLayout},
-	resolver::{ModuleResolver, ResourceResolver},
-};
 
-pub struct ApiStateView<C, BlockHash, AccountId, Block> {
-	client: Arc<C>,
-	account_id: AccountId,
-	at: Option<BlockHash>,
-	_marker: std::marker::PhantomData<Block>,
-}
-impl<C, Block, AccountId> ApiStateView<C, <Block as BlockT>::Hash, AccountId, Block>
-where
-	Block: BlockT,
-{
-	pub fn new(client: Arc<C>, account_id: AccountId, at: Option<<Block as BlockT>::Hash>) -> Self {
-		Self { client, account_id, at, _marker: Default::default() }
-	}
-}
-impl<C, Block, AccountId> ModuleResolver
-	for ApiStateView<C, <Block as BlockT>::Hash, AccountId, Block>
-where
-	Block: BlockT,
-	AccountId: Clone + std::fmt::Display + Codec,
-	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	C::Api: MVMApiRuntime<Block, AccountId>,
-{
-	type Error = anyhow::Error;
 
-	fn get_module(&self, module_id: &ModuleId) -> anyhow::Result<Option<Vec<u8>>> {
-		let api = self.client.runtime_api();
-		let at = BlockId::hash(self.at.unwrap_or_else(||
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash));
-		let bytes: Option<Vec<u8>> = api
-			.get_module(&at, bcs_alt::to_bytes(module_id).unwrap())
-			.map_err(runtime_error_into_rpc_err4)?
-			.map_err(runtime_error_into_rpc_err5)?;
-		Ok(bytes)
-	}
-}
-impl<C, Block, AccountId> ResourceResolver
-	for ApiStateView<C, <Block as BlockT>::Hash, AccountId, Block>
-where
-	Block: BlockT,
-	AccountId: Clone + std::fmt::Display + Codec,
-	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	C::Api: MVMApiRuntime<Block, AccountId>,
-{
-	type Error = anyhow::Error;
+// pub struct ApiStateView<C, BlockHash, AccountId, Block> {
+// 	client: Arc<C>,
+// 	account_id: AccountId,
+// 	at: Option<BlockHash>,
+// 	_marker: std::marker::PhantomData<Block>,
+// }
+// impl<C, Block, AccountId> ApiStateView<C, <Block as BlockT>::Hash, AccountId, Block>
+// where
+// 	Block: BlockT,
+// {
+// 	pub fn new(client: Arc<C>, account_id: AccountId, at: Option<<Block as BlockT>::Hash>) -> Self {
+// 		Self { client, account_id, at, _marker: Default::default() }
+// 	}
+// }
+// impl<C, Block, AccountId> ModuleResolver
+// 	for ApiStateView<C, <Block as BlockT>::Hash, AccountId, Block>
+// where
+// 	Block: BlockT,
+// 	AccountId: Clone + std::fmt::Display + Codec,
+// 	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+// 	C::Api: MVMApiRuntime<Block, AccountId>,
+// {
+// 	type Error = anyhow::Error;
 
-	fn get_resource(
-		&self,
-		_address: &AccountAddress,
-		tag: &StructTag,
-	) -> anyhow::Result<Option<Vec<u8>>> {
-		let api = self.client.runtime_api();
-		let at = BlockId::hash(self.at.unwrap_or_else(||
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash));
-		let bytes: Option<Vec<u8>> = api
-			.get_resource(&at, self.account_id.clone(), bcs_alt::to_bytes(tag).unwrap())
-			.map_err(runtime_error_into_rpc_err4)?
-			.map_err(runtime_error_into_rpc_err5)?;
-		Ok(bytes)
-	}
-}
+// 	fn get_module(&self, module_id: &ModuleId) -> anyhow::Result<Option<Vec<u8>>> {
+// 		let api = self.client.runtime_api();
+// 		let at = BlockId::hash(self.at.unwrap_or_else(||
+// 			// If the block hash is not supplied assume the best block.
+// 			self.client.info().best_hash));
+// 		let bytes: Option<Vec<u8>> = api
+// 			.get_module(&at, bcs_alt::to_bytes(module_id).unwrap())
+// 			.map_err(runtime_error_into_rpc_err4)?
+// 			.map_err(runtime_error_into_rpc_err5)?;
+// 		Ok(bytes)
+// 	}
+// }
+// impl<C, Block, AccountId> ResourceResolver
+// 	for ApiStateView<C, <Block as BlockT>::Hash, AccountId, Block>
+// where
+// 	Block: BlockT,
+// 	AccountId: Clone + std::fmt::Display + Codec,
+// 	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+// 	C::Api: MVMApiRuntime<Block, AccountId>,
+// {
+// 	type Error = anyhow::Error;
+
+// 	fn get_resource(
+// 		&self,
+// 		_address: &AccountAddress,
+// 		tag: &StructTag,
+// 	) -> anyhow::Result<Option<Vec<u8>>> {
+// 		let api = self.client.runtime_api();
+// 		let at = BlockId::hash(self.at.unwrap_or_else(||
+// 			// If the block hash is not supplied assume the best block.
+// 			self.client.info().best_hash));
+// 		let bytes: Option<Vec<u8>> = api
+// 			.get_resource(&at, self.account_id.clone(), bcs_alt::to_bytes(tag).unwrap())
+// 			.map_err(runtime_error_into_rpc_err4)?
+// 			.map_err(runtime_error_into_rpc_err5)?;
+// 		Ok(bytes)
+// 	}
+// }
 
 // Estimation struct with serde.
 #[derive(Serialize, Deserialize)]
@@ -409,9 +404,15 @@ where
 			.get_module(&at, module_id.into_vec())
 			.map_err(runtime_error_into_rpc_err4)?
 			.map_err(runtime_error_into_rpc_err4)?;
+        if f.is_none(){
+            return Err(runtime_error_into_rpc_err7())
+        }
 		let f = crate::fn_call::make_abi(&f.as_ref().unwrap())
 			.map_err(runtime_error_into_rpc_err4)
 			.ok();
+        if f.is_none(){
+            return Err(runtime_error_into_rpc_err7())
+        }
 		let ff = serde_json::to_vec(&f.as_ref().unwrap()).ok();
 		println!("test_get_module_abis=result==={:?}=={:?}=", f, ff);
 		// let f:Option<Vec<u8>>=Some(ff.bytes().collect());
@@ -521,12 +522,15 @@ where
 		let att = BlockId::hash(at.unwrap_or_else(||
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash));
-		let (tag_bcs, tag, _module_id) = convert::parse_struct_tag_string3(tag.into_vec()).unwrap();
+		let (tag_bcs, tag, _module_id) = convert::parse_struct_tag_string3(tag.into_vec()).map_err(runtime_error_into_rpc_err4)?;
 
 		let f: Option<Vec<u8>> = api
 			.get_resource(&att, account_id.clone(), tag_bcs)
 			.map_err(runtime_error_into_rpc_err4)?
 			.map_err(runtime_error_into_rpc_err5)?;
+        if f.is_none(){
+            return Err(runtime_error_into_rpc_err7())
+        }
 		let view = ApiStateView::new(self.client.clone(), account_id.clone(), at);
 		// use move_resource_viewer::MoveValueAnnotator;
 		let annotator = move_resource_viewer::MoveValueAnnotator::new(&view);
@@ -567,17 +571,20 @@ where
 			self.client.info().best_hash));
 		println!("======567======={:?}", 1);
 		let (_tag_bcs, tag, module_id) =
-			convert::parse_struct_tag_string3(value_type.clone().into_vec()).unwrap();
+			convert::parse_struct_tag_string3(value_type.clone().into_vec()).map_err(runtime_error_into_rpc_err4)?;
 		println!("======570======={:?}", 1);
 		let module: Option<Vec<u8>> = api
 			.get_module(&at, module_id)
 			.map_err(runtime_error_into_rpc_err4)?
 			.map_err(runtime_error_into_rpc_err5)?;
+        if module.is_none(){
+            return Err(runtime_error_into_rpc_err7())
+        }
 		println!("======575======={:?}", 1);
 		let raw_key = convert::table_item_key(key_type.into_vec(), key.into_vec(), module.clone().unwrap())
 			.map_err(runtime_error_into_rpc_err5)?;
 		println!("======578======={:?}", raw_key);
-		let handle = std::str::from_utf8(&handle.into_vec()).unwrap().parse::<u128>().unwrap();
+		let handle = std::str::from_utf8(&handle.into_vec()).unwrap().parse::<u128>().map_err(runtime_error_into_rpc_err5)?;
 		println!("=====580========{:?}", handle);
 		let f: Option<Vec<u8>> = api
 			.get_table_entry(&at, handle, raw_key)
@@ -639,6 +646,14 @@ fn runtime_error_into_rpc_err6(err: impl std::fmt::Debug) -> JsonRpseeError {
 		RUNTIME_ERROR,
 		"Error from struct tag json",
 		Some(format!("{:?}", err)),
+	))
+	.into()
+}
+fn runtime_error_into_rpc_err7() -> JsonRpseeError {
+	CallError::Custom(ErrorObject::owned(
+		RUNTIME_ERROR,
+		"Error from None ",
+		Some(""),
 	))
 	.into()
 }
